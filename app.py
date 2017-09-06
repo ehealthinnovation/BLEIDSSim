@@ -336,7 +336,7 @@ class IDDAnnunciationStatusChrc(Characteristic):
             CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Annunciation Status'))
 
     def ReadValue(self, options):
-        return [0x00]
+        return get_ids_annunciation_status()
 
 class IDDFeaturesChrc(Characteristic):
     IDS_FEATURES_UUID = '2ade'
@@ -494,6 +494,8 @@ def main():
     global device_advertisement
     global service_manager
     global app
+
+    print('IDS Sensor')
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
