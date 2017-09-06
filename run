@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sudo /etc/init.d/bluetooth restart
+rm -rf *.pyc
+python app.py
+
+
