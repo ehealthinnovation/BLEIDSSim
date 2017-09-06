@@ -5,6 +5,69 @@ from helper import *
 from crc import *
 from shortfloat import *
 
+#page 95/96
+'''
+[Therapy Control State Field - UINT8]
+Undetermined 	0x0F
+Stop 			0x33
+Pause			0x3C
+Run				0x55
+
+[Operational State Field - UINT8]
+Undetermined 	0x0F
+Off 			0x33
+Standby			0x3C
+Preparing		0x55
+Priming			0x5A
+Waiting			0x66
+Ready			0x96
+
+[Reservoir Remaining Amount - SFLOAT]
+
+[Flags - 8 bit]
+Reservoir Attached 		Bit 0
+'''
+
+
+class TherapyControlState(object):
+		Undetermined = 0x0F
+		Stop = 0x33
+		Pause = 0x3C
+		Run	= 0x55
+
+class OperationalState(object):
+		Undetermined = 0x0F
+		Off = 0x33
+		Standby = 0x3C
+		Preparing = 0x55
+		Priming = 0x5A
+		Waiting = 0x66
+		Ready = 0x96
+
+def ids_init():
+	global crc_count
+	print('ids_init')
+	crc_count = int()
+
+def get_ids_status():
+	print('get_ids_status')
+	
+	therapy = TherapyControlState.Run
+	operationalState = OperationalState.Ready
+	
+	status = [therapy, operationalState]
+	reservoirRemainingAmount = float_to_shortfloat(5.22)
+	status.append(reservoirRemainingAmount >> 8)
+	status.append(reservoirRemainingAmount & 0xff)
+
+	status.append(0)
+	crc = crc_calculate(status)
+	status.append(crc >> 8)
+	status.append(crc & 0xff)
+
+	return status
+
+
 def get_ids_status_changed():
 	print('get_ids_status_changed')
 	ids_status = 0
@@ -23,7 +86,7 @@ def get_ids_status_changed():
 			ids_status = set_bit(ids_status, int(status.keys().index(key)))
 
 	status = [ids_status >> 8, ids_status & 0xff]
-	status.append(0) # TO-DO: crc counter
+	status.append(0)
 	crc = crc_calculate(status)
 	status.append(crc >> 8)
 	status.append(crc & 0xff)
@@ -63,7 +126,7 @@ def get_ids_features():
 	shortfloat_value = float_to_shortfloat(5.22)
 	features.append(shortfloat_value >> 8)
 	features.append(shortfloat_value & 0xff)
-	features.append(0) # TO-DO: crc counter
+	features.append(0)
 
 	crc = crc_calculate(features)
 	features.append(crc >> 8)

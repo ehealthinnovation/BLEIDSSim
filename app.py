@@ -89,12 +89,12 @@ class BondManagementService(Service):
         self.add_characteristic(BondManagementFeatureChrc(bus, 1, self))
 
 class BondManagementControlPointChrc(Characteristic):
-    BONG_MGMT_CP_UUID = '2aa4'
+    BOND_MGMT_CP_UUID = '2aa4'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
             self, bus, index,
-            self.BONG_MGMT_CP_UUID,
+            self.BOND_MGMT_CP_UUID,
             ['write'],
             service)
         self.value = []
@@ -105,12 +105,12 @@ class BondManagementControlPointChrc(Characteristic):
         self.value = value
 
 class BondManagementFeatureChrc(Characteristic):
-    BONG_MGMT_FEATURE_UUID = '2aa5'
+    BOND_MGMT_FEATURE_UUID = '2aa5'
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
             self, bus, index,
-            self.BONG_MGMT_FEATURE_UUID,
+            self.BOND_MGMT_FEATURE_UUID,
             ['write'],
             service)
         self.value = []
@@ -320,7 +320,7 @@ class IDDStatusChrc(Characteristic):
             CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Status'))
 
     def ReadValue(self, options):
-        return [0x00]
+        return get_ids_status()
 
 class IDDAnnunciationStatusChrc(Characteristic):
     IDS_ANNUNCIATION_STATUS_UUID = '2add'
@@ -520,6 +520,8 @@ def main():
     service_manager.RegisterApplication(app.get_path(), {},
                                         reply_handler=register_app_cb,
                                         error_handler=register_app_error_cb)
+
+    ids_init()
 
     mainloop.run()
 
