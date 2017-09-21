@@ -111,7 +111,7 @@ class BondManagementFeatureChrc(Characteristic):
         Characteristic.__init__(
             self, bus, index,
             self.BOND_MGMT_FEATURE_UUID,
-            ['write'],
+            ['read'],
             service)
         self.value = []
         self.notifying = False
@@ -306,6 +306,18 @@ class IDDStatusChangedChrc(Characteristic):
     def ReadValue(self, options):
         return get_ids_status_changed()
 
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
+
 class IDDStatusChrc(Characteristic):
     IDS_STATUS_UUID = '2adc'
 
@@ -322,6 +334,18 @@ class IDDStatusChrc(Characteristic):
     def ReadValue(self, options):
         return get_ids_status()
 
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
+
 class IDDAnnunciationStatusChrc(Characteristic):
     IDS_ANNUNCIATION_STATUS_UUID = '2add'
 
@@ -337,6 +361,18 @@ class IDDAnnunciationStatusChrc(Characteristic):
 
     def ReadValue(self, options):
         return get_ids_annunciation_status()
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
 
 class IDDFeaturesChrc(Characteristic):
     IDS_FEATURES_UUID = '2ade'
@@ -367,8 +403,31 @@ class IDDStatusReaderControlPointChrc(Characteristic):
         self.add_descriptor(
             CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Status Reader Control Point'))
 
-    def ReadValue(self, options):
-        return [0x00]
+    #return fixed value for testing
+    def notify_status_reader_control_point(self):
+        if not self.notifying:
+            return
+        self.PropertiesChanged(
+                GATT_CHRC_IFACE,
+                { 'Value': [dbus.Byte(65)] }, [])
+
+    def WriteValue(self, value, options):
+        print('IDDStatusReaderControlPointChrc write: ' + repr(value))
+        parse_ids_status_reader_control_point(value)
+        self.notify_status_reader_control_point()
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
+
 
 class IDDCommandControlPointChrc(Characteristic):
     IDS_COMMAND_CP_UUID = '2b00'
@@ -383,8 +442,31 @@ class IDDCommandControlPointChrc(Characteristic):
         self.add_descriptor(
             CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Command Control Point'))
 
-    def ReadValue(self, options):
-        return [0x00]
+    #return fixed value for testing
+    def notify_command_control_point(self):
+        if not self.notifying:
+            return
+        self.PropertiesChanged(
+                GATT_CHRC_IFACE,
+                { 'Value': [dbus.Byte(66)] }, [])
+
+    def WriteValue(self, value, options):
+        print('IDDCommandControlPointChrc write: ' + repr(value))
+        parse_ids_command_control_point(value)
+        self.notify_command_control_point()
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
+
 
 class IDDCommandDataChrc(Characteristic):
     IDS_COMMAND_DATA_UUID = '2b01'
@@ -411,6 +493,7 @@ class IDDCommandDataChrc(Characteristic):
             return
         self.notifying = False
 
+
 class IDDHistoryDataChrc(Characteristic):
     IDS_HISTORY_DATA_UUID = '2b02'
 
@@ -436,6 +519,7 @@ class IDDHistoryDataChrc(Characteristic):
             return
         self.notifying = False
 
+
 class RecordAccessControlPointChrc(Characteristic):
     RACP_UUID = '2a52'
 
@@ -448,6 +532,31 @@ class RecordAccessControlPointChrc(Characteristic):
         self.notifying = False
         self.add_descriptor(
             CharacteristicUserDescriptionDescriptor(bus, 2, self, 'Record Access Control Point'))
+
+    #return fixed value for testing
+    def notify_racp(self):
+        if not self.notifying:
+            return
+        self.PropertiesChanged(
+                GATT_CHRC_IFACE,
+                { 'Value': [dbus.Byte(67)] }, [])
+
+    def WriteValue(self, value, options):
+        print('RecordAccessControlPointChrc write: ' + repr(value))
+        parse_racp(value)
+        self.notify_racp()
+
+    def StartNotify(self):
+        if self.notifying:
+            print('Already notifying, nothing to do')
+            return
+        self.notifying = True
+
+    def StopNotify(self):
+        if not self.notifying:
+            print('Not notifying, nothing to do')
+            return
+        self.notifying = False
 
 def register_ad_cb():
    	"""
