@@ -19,7 +19,7 @@ except ImportError:
 #from random import randint
 
 
-mainloop = None
+#mainloop = None
 
 BLUEZ_SERVICE_NAME = 'org.bluez'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
@@ -318,9 +318,9 @@ def find_adapter_gattmanager(bus):
                                DBUS_OM_IFACE)
     objects = remote_om.GetManagedObjects()
 
-    for o, props in objects.items():
+    for obj, props in objects.items():
         if GATT_MANAGER_IFACE in props.keys():
-            return o
+            return obj
 
     return None
 
@@ -330,10 +330,10 @@ def find_adapter_advertisingmanager(bus):
                                DBUS_OM_IFACE)
     objects = remote_om.GetManagedObjects()
 
-    for o, props in objects.items():
+    for obj, props in objects.items():
         #if LE_ADVERTISING_MANAGER_IFACE in props:
         if GATT_MANAGER_IFACE in props:
-            return o
+            return obj
 
     return None
 

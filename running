@@ -1,0 +1,16 @@
+[FLIGHT_MODE]
+enabled = 0
+
+[THERAPY_CONTROL_STATE]
+state = 0
+
+[STATUS_CHANGED]
+ids_status_therapy_control_status_changed = 1
+ids_status_operational_state_changed = 1
+ids_status_reservoir_status_changed = 1
+ids_status_annunciation_status_changed = 1
+ids_status_total_daily_insulin_status_changed = 1
+ids_status_active_basal_rate_status_changed = 1
+ids_status_active_bolus_status_changed = 1
+ids_status_history_event_recorded = 1
+

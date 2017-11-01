@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-crcMCRF4XXTable = [
+CRC_MCRF4XX_TABLE = [
     0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD,
     0x6536, 0x74BF, 0x8C48, 0x9DC1, 0xAF5A, 0xBED3,
     0xCA6C, 0xDBE5, 0xE97E, 0xF8F7, 0x1081, 0x0108,
@@ -51,5 +51,5 @@ def _crc16(data, crc, table):
     
     return crc & 0xffff
 
-def crc_calculate(data, crc=0):
-    return _crc16(data, 0xffff, crcMCRF4XXTable)
+def crc_calculate(data):
+    return _crc16(data, 0xffff, CRC_MCRF4XX_TABLE)
