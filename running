@@ -1,8 +1,8 @@
 [FLIGHT_MODE]
-enabled = 0
+enabled = 1
 
 [THERAPY_CONTROL_STATE]
-state = 0
+state = 72
 
 [STATUS_CHANGED]
 ids_status_therapy_control_status_changed = 1

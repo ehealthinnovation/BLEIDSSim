@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #http://blog.mrgibbs.io/bluez-5-39-ble-setup-on-the-raspberry-pi/
 
 import dbus
@@ -12,6 +11,9 @@ except ImportError:
 	import gobject as GObject
 
 mainloop = None
+app = None
+idsService = None
+idsCharacteristic = None
 
 class Application(dbus.service.Object):
 	def __init__(self, bus):
@@ -449,14 +451,29 @@ class IDDCommandControlPointChrc(Characteristic):
 			return
 		self.PropertiesChanged(
 			GATT_CHRC_IFACE,
-			{'Value': [dbus.Byte(66)]}, [])
+			{'Value': [dbus.Byte(0)]}, [])
 
 	def WriteValue(self, value, options):
 		print('IDDCommandControlPointChrc write: ' + repr(value))
 		self.reply = parse_ids_command_control_point(value)
+		#print(repr(self.reply))
+		#self.notify_command_control_point()
+
+		'''
+		for service in app.services:
+			if service.uuid == '1829':
+				idsService = service
 		
-		# response on the CommandData characteristic with a single byte
-		app.IDSService.IDDCommandDataChrc.notify_command_data(dbus.Byte(55))
+		for characteristic in idsService.characteristics:
+			if characteristic.uuid == '2b01':
+				characteristic.notify_command_data([dbus.Byte(99)])
+		'''
+
+		for service in app.services:
+			if service.uuid == '1829':
+				for characteristic in service.characteristics:
+					if characteristic.uuid == '2b01':
+						characteristic.notify_command_data()
 		
 	def StartNotify(self):
 		if self.notifying:
@@ -484,14 +501,19 @@ class IDDCommandDataChrc(Characteristic):
 		self.add_descriptor(
 			CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Command Data'))
 
-	def notify_command_data(value):
+	def notify_command_data(self):
 		print('notify_command_data')
 		if not self.notifying:
 			return
-		self.PropertiesChanged(
-			GATT_CHRC_IFACE,
-			{'Value': value}, [])
-
+		
+		for service in app.services:
+			if service.uuid == '1829':
+				for characteristic in service.characteristics:
+					if characteristic.uuid == '2b00':
+						self.PropertiesChanged(
+							GATT_CHRC_IFACE,
+							{'Value': characteristic.reply}, [])
+		
 	def StartNotify(self):
 		if self.notifying:
 			print('Already notifying, nothing to do')

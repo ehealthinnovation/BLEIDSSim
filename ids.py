@@ -163,6 +163,15 @@ class CommandControlOpCodes(object):
 	get_max_bolus_amount_response = 0x1482
 	set_max_bolus_amount = 0x148D
 
+class TemplateTypeValues(object):
+	undetermined = 0x0F
+	basal_rate_profile_template = 0x33
+	tbr_template = 0x3C
+	bolus_template = 0x55
+	isf_profile_template = 0x5A
+	i2cho_ratio_profile_template = 0x66
+	target_glucose_range_profile_template = 0x96
+
 
 #def ids_init():
 #	global crc_count
@@ -220,7 +229,7 @@ def get_ids_status_changed():
 		if status[key] == '1':
 			ids_status = set_bit(ids_status, int(status.keys().index(key)))
 
-	status = [ids_status >> 8, ids_status & 0xff]
+	status = [ids_status & 0xff, ids_status >> 8]
 	status.append(0)
 	crc = crc_calculate(status)
 	status.append(crc & 0xff)
@@ -304,8 +313,9 @@ def parse_ids_status_reader_control_point(value):
 		return None
 
 	opcode_bytes = value[0:2]
-	opcode = ''.join(map(lambda b: format(b, "02x"), opcode_bytes))
-	
+	#opcode = ''.join(map(lambda b: format(b, "02x"), opcode_bytes))
+	opcode = ''.join(reversed(map(lambda b: format(b, "02x"), opcode_bytes)))
+
 	print('op code: ' + repr(opcode))
 
 	if str(int(opcode,16)) == str(StatusReaderOpCodes.reset_status):
@@ -377,8 +387,6 @@ def handle_get_active_bolus_delivery(value):
 
 	#extract the bolus id from the request packet
 	bolus_id_bytes = value[2:4]
-	#bolus_id = ''.join(map(lambda b: format(b, "02x"), bolus_id_bytes))
-
 	bolus_flags = collections.OrderedDict((('Bolus_delay_time_present', 1),
 					 			 ('Bolus_template_number_present', 1),
 					 			 ('Bolus_activation_type_present', 1),
@@ -597,118 +605,789 @@ def parse_ids_command_control_point(value):
 
 	opcode_bytes = value[0:2]
 	opcode = ''.join(map(lambda b: format(b, "02x"), opcode_bytes))
-	
+
 	print('op code: ' + repr(opcode))
 
 	if str(int(opcode,16)) == str(CommandControlOpCodes.set_therapy_control_state):
-		print('set_therapy_control_state')
+		response = set_therapy_control_state(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_flight_mode):
-		handle_set_flight_mode()
+		response = handle_set_flight_mode()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.snooze_annunciation):
-		print('snooze_annunciation')
+		response = handle_snooze_annunciation(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.confirm_annunciation):
-		print('confirm_annunciation')
+		response = handle_confirm_annunciation(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.read_basal_rate_profile_template):
-		print('read_basal_rate_profile_template')
+		response = handle_read_basal_rate_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.write_basal_rate_profile_template):
-		print('write_basal_rate_profile_template')
+		response = handle_write_basal_rate_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_tbr_adjustment):
-		print('set_tbr_adjustment')
+		response = handle_set_tbr_adjustment(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.cancel_tbr_adjustment):
-		print('cancel_tbr_adjustment')
+		response = handle_cancel_tbr_adjustment()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_tbr_template):
-		print('get_tbr_template')
+		response = handle_get_tbr_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_tbr_template):
-		print('set_tbr_template')
+		response = handle_set_tbr_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_bolus):
-		print('set_bolus')
+		response = handle_set_bolus(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.cancel_bolus):
-		print('cancel_bolus')
+		response = handle_cancel_bolus(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_available_boluses):
-		print('get_available_boluses')
+		response = handle_get_available_boluses()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_bolus_template):
-		print('get_bolus_template')
+		response = handle_get_bolus_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_bolus_template):
-		print('set_bolus_template')
+		response = handle_set_bolus_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_template_status_and_details):
-		print('get_template_status_and_details')
+		response = handle_get_template_status_and_details()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.reset_template_status):
-		print('reset_template_status')
+		response = handle_reset_template_status(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.activate_profile_templates):
-		print('activate_profile_templates')
+		response = handle_activate_profile_templates(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_activated_profile_templates):
-		print('get_activated_profile_templates')
+		response = handle_get_activated_profile_templates()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.start_priming):
-		print('start_priming')
+		response = handle_start_priming(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.stop_priming):
-		print('stop_priming')
+		response = handle_stop_priming()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_initial_reservoir_fill_level):
-		print('set_initial_reservoir_fill_level')
+		response = handle_set_initial_reservoir_fill_level(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.reset_reservoir_insulin_operation_time):
-		print('reset_reservoir_insulin_operation_time')
+		response = handle_reset_reservoir_insulin_operation_time()
 		return responsels
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.read_isf_profile_template):
-		print('read_isf_profile_template')
+		response = handle_read_isf_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.write_isf_profile_template):
-		print('write_isf_profile_template')
+		response = handle_write_isf_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.read_i2cho_ratio_profile_template):
-		print('read_i2cho_ratio_profile_template')
+		response = handle_read_i2cho_ratio_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.write_i2cho_ratio_profile_template):
-		print('write_i2cho_ratio_profile_template')
+		response = handle_write_i2cho_ratio_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.read_target_glucose_range_profile_template):
-		print('read_target_glucose_range_profile_template')
+		response = handle_read_target_glucose_range_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.write_target_glucose_range_profile_template):
-		print('write_target_glucose_range_profile_template')
+		response = handle_write_target_glucose_range_profile_template(value)
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.get_max_bolus_amount):
-		print('get_max_bolus_amount')
+		response = handle_get_max_bolus_amount()
 		return response
 	elif str(int(opcode,16)) == str(CommandControlOpCodes.set_max_bolus_amount):
-		print('set_max_bolus_amount')
+		response = handle_set_max_bolus_amount(value)
 		return response
 
-def handle_set_flight_mode():
-	print('set_flight_mode')
-	
-	update_setting('running', 'FLIGHT_MODE', 'enabled', '1')
-
+#TO-DO
+def set_therapy_control_state(value):
+	print('set_therapy_control_state')
 	response = []
+	
+	state_byte = value[2]
+	state = int(state_byte)
+
+
+	update_setting('running', 'THERAPY_CONTROL_STATE', 'state', hex(state)[2:])
+
 	#The Server shall confirm the receipt of this command by indicating the IDD Command Control Point with a Response Code Op Code,
 	#a Request Op Code of Set Flight Mode, and a Response Code Value of Success.
-	response.append(dbus.Byte(StatusReaderOpCodes.response_code & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.response_code >> 8))
-	response.append(dbus.Byte(StatusReaderOpCodes.set_flight_mode & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.set_flight_mode >> 8))
+	response.append(dbus.Byte(CommandControlOpCodes.response_code & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.response_code >> 8))
+	response.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state >> 8))
 	response.append(dbus.Byte(ResponseCodes.success))
+
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
 	print(repr(response))
+
+	return response
+
+def handle_set_flight_mode():
+	print('handle_set_flight_mode')
+	response = []
+
+	update_setting('running', 'FLIGHT_MODE', 'enabled', '1')
 	
+	#The Server shall confirm the receipt of this command by indicating the IDD Command Control Point with a Response Code Op Code,
+	#a Request Op Code of Set Flight Mode, and a Response Code Value of Success.
+	response.append(dbus.Byte(CommandControlOpCodes.response_code & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.response_code >> 8))
+	response.append(dbus.Byte(CommandControlOpCodes.set_flight_mode & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.set_flight_mode >> 8))
+	response.append(dbus.Byte(ResponseCodes.success))
+	
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+
+	return response
+
+#indicate the IDD Command Control Point with a
+#snooze Annunciation Response Op Code and the Annunciation Instance ID of the snoozed annunciation.
+def handle_snooze_annunciation(value):
+	print('handle_snooze_annunciation')
+	response = []
+
+	response.append(dbus.Byte(CommandControlOpCodes.snooze_annunciation_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.snooze_annunciation_response >> 8))
+	response.append(dbus.Byte(value[3]))
+	response.append(dbus.Byte(value[4]))
+
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+
+	return response
+
+#indicate the IDD Command Control Point with a Confirm Annunciation
+#Response Op Code and the Annunciation Instance ID of the confirmed annunciation
+def handle_confirm_annunciation(value):
+	print('handle_confirm_annunciation')
+	response = []
+
+	response.append(dbus.Byte(CommandControlOpCodes.confirm_annunciation_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.confirm_annunciation_response >> 8))
+	response.append(dbus.Byte(value[3]))
+	response.append(dbus.Byte(value[4]))
+
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+
+	return response
+
+def handle_read_basal_rate_profile_template(value):
+	print('handle_read_basal_rate_profile_template')
+	response = []
+	flags = 0
+	first_duration = 180
+	first_rate = float_to_shortfloat(1.0)
+	second_duration = 330
+	second_rate = float_to_shortfloat(1.5)
+	third_duration = 345
+	third_rate = float_to_shortfloat(2.0)
+
+	print('first rate: ' + repr(first_rate))
+	print('second rate: ' + repr(second_rate))
+	print('third rate: ' + repr(third_rate))
+	
+	template_flags = collections.OrderedDict((('second_time_block_present', 1),
+					 			 ('third_time_block_present', 0)
+								))
+
+	for key in template_flags:
+		if template_flags[key] == 1:
+			flags = set_bit(flags, int(template_flags.keys().index(key)))
+
+	response.append(dbus.Byte(CommandControlOpCodes.read_basal_rate_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.read_basal_rate_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(0x01)) #template number
+	response.append(dbus.Byte(0x01)) #first time block number index
+	response.append(dbus.Byte(int(hex(first_duration & 0xff), 16)))
+	response.append(dbus.Byte(int(hex(first_duration >> 8), 16)))
+	response.append(dbus.Byte(first_rate & 0xff))
+	response.append(dbus.Byte(first_rate >> 8))
+	response.append(dbus.Byte(int(hex(second_duration & 0xff), 16)))
+	response.append(dbus.Byte(int(hex(second_duration >> 8), 16)))
+	response.append(dbus.Byte(second_rate & 0xff))
+	response.append(dbus.Byte(second_rate >> 8))
+	'''
+	response.append(dbus.Byte(int(hex(third_duration & 0xff), 16)))
+	response.append(dbus.Byte(int(hex(third_duration >> 8), 16)))
+	response.append(dbus.Byte(third_rate & 0xff))
+	response.append(dbus.Byte(third_rate >> 8))
+	'''
+
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+
+	return response
+
+def float_to_hex(f):
+    return hex(struct.unpack('<I', struct.pack('<f', f))[0])[2:]
+
+# 0fcc0101 01a0053f 8000b78d
+def handle_write_basal_rate_profile_template(value):
+	print('handle_write_basal_rate_profile_template')
+	response = []
+	
+	flags = value[2]
+	basal_rate_profile_template_number = value[3]
+	first_time_block_number_index = value[4]
+	
+	first_duration_bytes = value[5:7]
+	first_duration_str = ''.join(reversed(map(lambda b: format(b, "02x"), first_duration_bytes)))
+	first_duration = int(first_duration_str, 16)
+	print('first duration: ' + repr(first_duration))
+
+	first_rate_bytes = value[7:9]
+	first_rate_str = ''.join(reversed(map(lambda b: format(b, "02x"), first_rate_bytes)))
+	first_rate = int(first_rate_str, 16)
+	print('first rate: ' + repr(shortfloat_to_float(first_rate)))
+
+	return response
+
+def handle_set_tbr_adjustment(value):
+	print('handle_set_tbr_adjustment')
+	response = []
+	
+	flags = value[2]
+	tbr_type = value[3]
+	print('tbr type: ' + repr(int(tbr_type)))
+	
+	tbr_adjustment_value_bytes = value[4:6]
+	print(repr(tbr_adjustment_value_bytes))
+	tbr_adjustment_value_str = ''.join(reversed(map(lambda b: format(b, "02x"), tbr_adjustment_value_bytes)))
+	tbr_adjustment_value = int(tbr_adjustment_value_str, 16)
+	tbr_adjustment_value = shortfloat_to_float(tbr_adjustment_value)
+	print('tbr adjustment value: ' + repr(tbr_adjustment_value))
+	
+	tbr_duration_bytes = value[6:8]
+	print(repr(tbr_duration_bytes))
+	tbr_duration_str = ''.join(reversed(map(lambda b: format(b, "02x"), tbr_duration_bytes)))
+	print('tbr duration: ' + repr(tbr_duration_str))
+
+	tbr_template_number = value[8]
+	print('tbr template number: ' + repr(int(tbr_template_number)))
+
+	tbr_delivery_context = value[9]
+	print('tbr delivery context: ' + repr(int(tbr_delivery_context)))
+
+	return response
+
+def handle_cancel_tbr_adjustment():
+	print('handle_cancel_tbr_adjustment')
+	response = []
+	return response
+
+def handle_get_tbr_template(value):
+	print('handle_get_tbr_template')
+	print(value)
+
+	response = []
+	
+	tbr_duration = 2
+	tbr_adjustment_value = float_to_shortfloat(3.2)
+
+	response.append(dbus.Byte(CommandControlOpCodes.get_tbr_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_tbr_template_response >> 8))
+	response.append(dbus.Byte(value[2])) # TBR Template Number
+	response.append(dbus.Byte(0x33)) # TBR Type (absolute)
+	response.append(dbus.Byte(tbr_adjustment_value & 0xff)) # TBR Adjustment Value (lsb)
+	response.append(dbus.Byte(tbr_adjustment_value >> 8)) # TBR Adjustment Value (msb)
+	response.append(dbus.Byte(tbr_duration & 0xff)) # TBR Duration (lsb)
+	response.append(dbus.Byte(tbr_duration >> 8))   # TBR Duration (msb)
+	
+	#crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_set_tbr_template(value):
+	print('handle_set_tbr_template')
+	print(value)
+	response = []
+
+	tbr_template_number = value[2]
+	print('tbr template number: ' + repr(int(tbr_template_number)))
+	tbr_type = value[3]
+	print('tbr type: ' + repr(int(tbr_type)))
+
+	tbr_adjustment_value_bytes = value[4:6]
+	print(repr(tbr_adjustment_value_bytes))
+	tbr_adjustment_value_str = ''.join(reversed(map(lambda b: format(b, "02x"), tbr_adjustment_value_bytes)))
+	tbr_adjustment_value = int(tbr_adjustment_value_str, 16)
+	tbr_adjustment_value = shortfloat_to_float(tbr_adjustment_value)
+	print('tbr adjustment value: ' + repr(tbr_adjustment_value))
+
+	tbr_duration_bytes = value[6:8]
+	print(repr(tbr_duration_bytes))
+	tbr_duration_str = ''.join(reversed(map(lambda b: format(b, "02x"), tbr_duration_bytes)))
+	print('tbr duration: ' + repr(tbr_duration_str))
+
+	#---
+	response.append(dbus.Byte(CommandControlOpCodes.set_tbr_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.set_tbr_template_response >> 8))
+	response.append(dbus.Byte(value[2])) # TBR Template Number
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_set_bolus(value):
+	print('handle_set_bolus')
+	print(value)
+	response = []
+	
+	flags = value[2]
+	bolus_type = value[3]
+	print('bolus type: ' + repr(int(bolus_type)))
+
+	bolus_type_bytes = value[4:6]
+	print(repr(bolus_type_bytes))
+	bolus_type_str = ''.join(reversed(map(lambda b: format(b, "02x"), bolus_type_bytes)))
+	bolus_type = int(bolus_type_str, 16)
+	bolus_type = shortfloat_to_float(bolus_type)
+	print('bolus type: ' + repr(bolus_type))
+	
+	#---
+	bolus_id = 2
+
+	response.append(dbus.Byte(CommandControlOpCodes.set_bolus_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.set_bolus_response >> 8))
+	response.append(dbus.Byte(bolus_id & 0xff))
+	response.append(dbus.Byte(bolus_id >> 8))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_cancel_bolus(value):
+	print('handle_cancel_bolus')
+	print(value)
+	response = []
+
+	bolus_id_bytes = value[2:4]
+	print(repr(bolus_id_bytes))
+	bolus_id_str = ''.join(reversed(map(lambda b: format(b, "02x"), bolus_id_bytes)))
+	bolus_id = int(bolus_id_str, 16)
+	bolus_id = shortfloat_to_float(bolus_id)
+	print('bolus id: ' + repr(int(bolus_id)))
+
+	response.append(dbus.Byte(CommandControlOpCodes.cancel_bolus_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.cancel_bolus_response >> 8))
+	response.append(dbus.Byte(bolus_id & 0xff))
+	response.append(dbus.Byte(bolus_id >> 8))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_get_available_boluses():
+	print('handle_get_available_boluses')
+	response = []
+
+	response.append(dbus.Byte(CommandControlOpCodes.get_available_boluses_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_available_boluses_response >> 8))
+	response.append(dbus.Byte(0x01)) #Fast Bolus Available
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_get_bolus_template(value):
+	print('handle_get_bolus_template')
+	print(value)
+	response = []
+
+	bolus_template_number = value[2]
+	bolus_fast_amount = float_to_shortfloat(3.2)
+
+	response.append(dbus.Byte(CommandControlOpCodes.get_bolus_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_bolus_template_response >> 8))
+	response.append(dbus.Byte(bolus_template_number))
+	response.append(dbus.Byte(0x00)) #flags, all bits cleared
+	response.append(dbus.Byte(BolusType.fast))
+	response.append(dbus.Byte(bolus_fast_amount & 0xff))
+	response.append(dbus.Byte(bolus_fast_amount >> 8))
+	response.append(dbus.Byte(0x00)) #extended
+	response.append(dbus.Byte(0x00)) #extended
+	response.append(dbus.Byte(0x00)) #duration
+	response.append(dbus.Byte(0x00)) #duration
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_set_bolus_template(value):
+	print('handle_set_bolus_template')
+	print(value)
+	response = []
+	
+	bolus_template_number = value[2]
+	print('bolus template number: ' + repr(int(bolus_template_number)))
+	bolus_type = value[4]
+	print('bolus type: ' + repr(int(bolus_type)))
+
+	bolus_fast_amount_bytes = value[5:7]
+	print(repr(bolus_fast_amount_bytes))
+	bolus_fast_amount_str = ''.join(reversed(map(lambda b: format(b, "02x"), bolus_fast_amount_bytes)))
+	bolus_fast_amount = int(bolus_fast_amount_str, 16)
+	bolus_fast_amount = shortfloat_to_float(bolus_fast_amount)
+	print('bolus fast amount: ' + repr(bolus_fast_amount))
+
+	response.append(dbus.Byte(CommandControlOpCodes.set_bolus_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.set_bolus_template_response >> 8))
+	response.append(dbus.Byte(bolus_template_number))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+#pg. 67
+def handle_get_template_status_and_details():
+	print('handle_get_template_status_and_details')
+	response = []
+	
+	response.append(dbus.Byte(CommandControlOpCodes.get_template_status_and_details_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_template_status_and_details_response >> 8))
+	response.append(dbus.Byte(TemplateTypeValues.bolus_template))
+	response.append(dbus.Byte(0x01)) # Starting Template Number
+	response.append(dbus.Byte(0x03)) # Number of Templates
+	response.append(dbus.Byte(0x18)) # Max Number of Supported Time Blocks (24)
+	response.append(dbus.Byte(0x39)) # Configurable ([Yes, No, Yes]) and Configured Flags ([No, Yes, Yes])
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_reset_template_status(value):
+	print('handle_reset_template_status')
+	print(value)
+	response = []
+
+	number_of_templates_to_reset = value[2]
+	print('number of templates to reset: ' + repr(int(number_of_templates_to_reset)))
+	
+	for x in range(0, int(number_of_templates_to_reset)):
+		print('reset template: ' + repr(int(value[x + 3])))
+		
+
+	# respond that all templates were reset successfully
+	response.append(dbus.Byte(CommandControlOpCodes.reset_template_status_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.reset_template_status_response >> 8))
+	response.append(dbus.Byte(number_of_templates_to_reset))	
+	for x in range(0, int(number_of_templates_to_reset)):
+		response.append(dbus.Byte(int(value[x + 3])))
+	
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_activate_profile_templates(value):
+	print('handle_activate_profile_templates')
+	print(value)
+	response = []
+	
+	number_of_templates_to_activate = value[2]
+	print('number of templates to activate: ' + repr(int(number_of_templates_to_activate)))
+	
+	for x in range(0, int(number_of_templates_to_activate)):
+		print('activate profile template: ' + repr(int(value[x + 3])))
+		
+
+	# respond that all profile templates were activated successfully
+	response.append(dbus.Byte(CommandControlOpCodes.activate_profile_templates_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.activate_profile_templates_response >> 8))
+	response.append(dbus.Byte(number_of_templates_to_activate))	
+	for x in range(0, int(number_of_templates_to_activate)):
+		response.append(dbus.Byte(int(value[x + 3])))
+	
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_get_activated_profile_templates():
+	print('handle_get_activated_profile_templates')
+	response = []
+	 
+	number_of_activated_templates = 2
+	
+	# respond that all profile templates were activated successfully
+	response.append(dbus.Byte(CommandControlOpCodes.get_activated_profile_templates_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_activated_profile_templates_response >> 8))
+	response.append(dbus.Byte(number_of_activated_templates))	
+	response.append(dbus.Byte(0x01))
+	response.append(dbus.Byte(0x02))
+	
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_start_priming(value):
+	print('handle_start_priming')
+	response = []
+
+	priming_amount_bytes = value[2:4]
+	print(repr(priming_amount_bytes))
+	priming_amount_str = ''.join(reversed(map(lambda b: format(b, "02x"), priming_amount_bytes)))
+	priming_amount = int(priming_amount_str, 16)
+	priming_amount = shortfloat_to_float(priming_amount)
+	print('priming amount: ' + repr(priming_amount))
+
+	return response
+
+def handle_stop_priming():
+	print('handle_stop_priming')
+	response = []
+	return response
+
+def handle_set_initial_reservoir_fill_level(value):
+	print('handle_set_initial_reservoir_fill_level')
+	response = []
+	
+	initial_reservoir_fill_level_bytes = value[2:4]
+	print(repr(initial_reservoir_fill_level_bytes))
+	initial_reservoir_fill_level_str = ''.join(reversed(map(lambda b: format(b, "02x"), initial_reservoir_fill_level_bytes)))
+	initial_reservoir_fill_level = int(initial_reservoir_fill_level_str, 16)
+	initial_reservoir_fill_level = shortfloat_to_float(initial_reservoir_fill_level)
+	print('initial reservoir fill level amount: ' + repr(initial_reservoir_fill_level))
+	return response
+
+def handle_reset_reservoir_insulin_operation_time():
+	print('handle_reset_reservoir_insulin_operation_time')
+	response = []
+	return response
+	
+#pg 64, 187
+def handle_read_isf_profile_template(value):
+	print('handle_read_isf_profile_template')
+	response = []
+	flags = 0
+	first_duration = 5
+	first_isf = float_to_shortfloat(10)
+
+	response.append(dbus.Byte(CommandControlOpCodes.read_isf_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.read_isf_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(0x01)) # ISF Profile Template Number
+	response.append(dbus.Byte(0x01)) # First Time Block Number Index
+	response.append(dbus.Byte(first_duration & 0xff))
+	response.append(dbus.Byte(first_duration >> 8))
+	response.append(dbus.Byte(first_isf & 0xff))
+	response.append(dbus.Byte(first_isf >> 8))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_write_isf_profile_template(value):
+	print('handle_write_isf_profile_template')
+	response = []
+	flags = 1
+
+	response.append(dbus.Byte(CommandControlOpCodes.write_isf_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.write_isf_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(value[3])) # ISF Profile Template Number
+	response.append(dbus.Byte(value[4])) # First Time Block Number Index
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_read_i2cho_ratio_profile_template(value):
+	print('handle_read_i2cho_ratio_profile_template')
+	response = []
+	template_number = value[2]
+	flags = 0
+	first_duration = 5
+	first_i2cho_ratio = float_to_shortfloat(5.2)
+
+	#First I2CHO Ratio
+	response.append(dbus.Byte(CommandControlOpCodes.read_isf_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.read_isf_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(template_number))
+	response.append(dbus.Byte(0x01)) #First Time Block Number Index
+	response.append(dbus.Byte(first_duration & 0xff))
+	response.append(dbus.Byte(first_duration >> 8))
+	response.append(dbus.Byte(first_i2cho_ratio & 0xff))
+	response.append(dbus.Byte(first_i2cho_ratio >> 8))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_write_i2cho_ratio_profile_template(value):
+	print('handle_write_i2cho_ratio_profile_template')
+	response = []
+	template_number = value[3]
+	first_block_time_number_index = value[4]
+	flags = 1
+
+	response.append(dbus.Byte(CommandControlOpCodes.write_isf_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.write_isf_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(template_number))
+	response.append(dbus.Byte(first_block_time_number_index))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_read_target_glucose_range_profile_template(value):
+	print('handle_read_target_glucose_range_profile_template')
+	response = []
+	template_number = value[2]
+	flags = 0
+	first_duration = 5
+	first_lower_target_glucose_limit = float_to_shortfloat(2.9)
+	first_upper_target_glucose_limit = float_to_shortfloat(8.5)
+	response.append(dbus.Byte(CommandControlOpCodes.read_target_glucose_range_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.read_target_glucose_range_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(template_number))
+	response.append(dbus.Byte(0x01)) # First Time Block Number Index
+	response.append(dbus.Byte(first_duration & 0xff))
+	response.append(dbus.Byte(first_duration >> 8))
+	response.append(dbus.Byte(first_lower_target_glucose_limit & 0xff))
+	response.append(dbus.Byte(first_lower_target_glucose_limit >> 8))
+	response.append(dbus.Byte(first_upper_target_glucose_limit & 0xff))
+	response.append(dbus.Byte(first_upper_target_glucose_limit >> 8))
+	
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_write_target_glucose_range_profile_template(value):
+	print('handle_write_target_glucose_range_profile_template')
+	print(value)
+	response = []
+	flags = 1 # flags [transaction complete: true]
+	template_number = value[3]
+	first_time_block_number_index = value[4]
+
+	response.append(dbus.Byte(CommandControlOpCodes.write_target_glucose_range_profile_template_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.write_target_glucose_range_profile_template_response >> 8))
+	response.append(dbus.Byte(flags))
+	response.append(dbus.Byte(template_number))
+	response.append(dbus.Byte(first_time_block_number_index))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_get_max_bolus_amount():
+	print('handle_get_max_bolus_amount')
+	response = []
+	max_bolus_amount = float_to_shortfloat(9.0)
+
+	response.append(dbus.Byte(CommandControlOpCodes.get_max_bolus_amount_response & 0xff))
+	response.append(dbus.Byte(CommandControlOpCodes.get_max_bolus_amount_response >> 8))
+	response.append(dbus.Byte(max_bolus_amount & 0xff))
+	response.append(dbus.Byte(max_bolus_amount >> 8))
+
+	# crc counter
+	response.append(dbus.Byte(0x00))
+	crc = crc_calculate(response)
+	response.append(dbus.Byte(crc & 0xff))
+	response.append(dbus.Byte(crc >> 8))
+	print(repr(response))
+	return response
+
+def handle_set_max_bolus_amount(value):
+	print('handle_set_max_bolus_amount')
+	response = []
 	return response
 
 def parse_racp(value):

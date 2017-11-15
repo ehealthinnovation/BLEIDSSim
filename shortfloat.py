@@ -20,7 +20,8 @@ MDER_NEGATIVE_INFINITY = 0x0802
 
 
 def shortfloat_to_float(short_float_number):
-	number = int(short_float_number, 16)
+	#number = int(short_float_number, 16)
+	number = short_float_number
 	
 	#remove the mantissa portion of the number using bit shifting
 	exponent = number >> 12
