@@ -1,10 +1,21 @@
+import logging
 import dbus
 import collections
+import datetime
 
 from helper import *
 from crc import *
 from shortfloat import *
 from config import *
+from history import *
+from timer import *
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+time_zone = 0
+dst = 0
+
 
 class AnnunciationTypeValues(object):
 	system_issue = 0x000F
@@ -172,8 +183,44 @@ class TemplateTypeValues(object):
 	i2cho_ratio_profile_template = 0x66
 	target_glucose_range_profile_template = 0x96
 
+class RecordAccessControlPointOpCodes(object):
+	response_code = 0x0F
+	report_stored_records = 0x33
+	delete_stored_records = 0x3C
+	abort_operation = 0x55
+	report_number_of_stored_records = 0x5A
+	number_of_stored_records_response = 0x66
 
-#def ids_init():
+class RecordAccessControlPointOperators(object):
+	null = 0x0F
+	all_records = 0x33
+	less_than_or_equal_to = 0x3C
+	greater_than_or_equal_to = 0x55
+	within_range_of = 0x5A
+	first_record = 0x66
+	last_record = 0x69
+	
+class RecordAccessControlPointOperandFilters(object):
+	sequence_number = 0x0F
+	sequence_number_filtered_by_reference_time_event = 0x33
+	sequence_number_filtered_by_nonreference_time_event = 0x3C
+
+class RecordAccessControlPointResponseCodes(object):
+	procedure_not_applicable = 0x0A
+	success = 0xF0
+
+#TO-DO: command line argument to set the reference time without needing the collector to set it
+def ids_init():
+	logger.info('ids_init')
+	history_init()
+	time_zone = 0
+	dst = 0
+
+	#schedule.every(10).seconds.do(run_threaded, job)
+	#schedule.run_pending()
+	
+	#do_every(1,hello,'foo')
+	#add_event(EventType.priming_started, '')
 #	global crc_count
 #	crc_count = int()
 
@@ -199,7 +246,7 @@ def crc_is_valid(value):
 
 
 def get_ids_status():
-	print('get_ids_status')
+	print('get ids status')
 	
 	therapy = TherapyControlState.run
 	state = OperationalState.ready
@@ -220,7 +267,7 @@ def get_ids_status():
 
 
 def get_ids_status_changed():
-	print('get_ids_status_changed')
+	print('get ids status changed')
 	ids_status = 0
 
 	status = get_dict('running', 'STATUS_CHANGED')
@@ -239,12 +286,12 @@ def get_ids_status_changed():
 
 
 def get_ids_features():
-	print('get_ids_features')
+	print('get ids features')
 	ids_features = 0
 	features = 0
 
 	dict_features = get_dict('configuration', 'FEATURES')
-	print(repr(dict_features))
+	print(dict_features)
 
 	for key in dict_features:
 		if dict_features[key] == '1':
@@ -266,11 +313,11 @@ def get_ids_features():
 
 
 def get_ids_annunciation_status():
-	print('get_ids_annunciation_status')
+	print('get ids annunciation status')
 	flags = 0
 
 	dict_annunciation = get_dict('configuration', 'ANNUNCIATION_STATUS')
-	print(repr(dict_annunciation))
+	print(dict_annunciation)
 
 	for key in dict_annunciation:
 		if dict_annunciation[key] == '1':
@@ -306,7 +353,7 @@ The Server shall confirm the status reset by indicating the IDD Status Reader Co
 a Request Op Code of Reset Status and Response Code Value of Success.
 '''
 def parse_ids_status_reader_control_point(value):
-	print('parse_ids_status_reader_control_point')
+	print('parse ids status reader control point')
 	response = []
 
 	if(crc_is_valid(value) == False):
@@ -604,7 +651,8 @@ def parse_ids_command_control_point(value):
 		return None
 
 	opcode_bytes = value[0:2]
-	opcode = ''.join(map(lambda b: format(b, "02x"), opcode_bytes))
+	opcode = ''.join(reversed(map(lambda b: format(b, "02x"), opcode_bytes)))
+	#opcode = ''.join(map(lambda b: format(b, "02x"), opcode_bytes))
 
 	print('op code: ' + repr(opcode))
 
@@ -1200,6 +1248,9 @@ def handle_start_priming(value):
 	priming_amount = shortfloat_to_float(priming_amount)
 	print('priming amount: ' + repr(priming_amount))
 
+	# pg.171
+	add_event(EventType.priming_started, repr(priming_amount))
+
 	return response
 
 def handle_stop_priming():
@@ -1391,6 +1442,110 @@ def handle_set_max_bolus_amount(value):
 	return response
 
 def parse_racp(value):
-	print("parse_racp")
-	print(value)
+	print('parse_racp')
+	response = []
 
+	if(crc_is_valid(value) == False):
+		return None
+
+	opcode = value[0]
+	print('op code: ' + repr(opcode))
+
+	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_number_of_stored_records):
+		response = handle_report_number_of_stored_records(value)
+		return response
+	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_stored_records):
+		response = handle_report_stored_records(value)
+		return response
+	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.delete_stored_records):
+		response = handle_delete_stored_records(value)
+		return response
+
+
+def handle_report_number_of_stored_records(value):
+	print('handle_report_number_of_stored_records')
+	response = []
+	return response
+
+def handle_report_stored_records(value):
+	print('handle_report_stored_records')
+	response = []
+	
+	operator = value[1]
+	print('operator: ' + repr(operator))
+
+	if str(int(operator)) == str(RecordAccessControlPointOperators.all_records):
+		print('all records')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.greater_than_or_equal_to):
+		print('greater_than_or_equal_to')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.less_than_or_equal_to):
+		print('less_than_or_equal_to')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.within_range_of):
+		print('within_range_of')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.first_record):
+		print('first_record')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.last_record):
+		print('last_record')
+
+	return response
+
+def handle_delete_stored_records(value):
+	print('handle_delete_stored_records')
+	response = []
+	
+	operator = value[1]
+	print('operator: ' + repr(operator))
+	
+	if str(int(operator)) == str(RecordAccessControlPointOperators.all_records):
+		print('all records')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.greater_than_or_equal_to):
+		print('greater_than_or_equal_to')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.less_than_or_equal_to):
+		print('less_than_or_equal_to')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.within_range_of):
+		print('within_range_of')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.first_record):
+		print('first_record')
+	if str(int(operator)) == str(RecordAccessControlPointOperators.last_record):
+		print('last_record')
+
+	return response
+
+#pg 153/190
+def parse_current_time(value):
+	logging.info('parse_current_time')
+	
+	year_bytes = value[0:2]
+	year_bytes = year_bytes[::-1]
+	year = ''.join(map(lambda b: format(b, "02x"), year_bytes))
+	d = datetime.datetime(int(year,16), value[2], value[3], value[4], value[5], value[6])
+	print d.year, d.month, d.day, d.hour, d.minute, d.second
+	
+	print(repr(time_zone))
+	print(repr(dst))
+
+	ref_time = [	
+				0x0F, 		# reason
+				value[0], 	# year
+				value[1], 	# year
+				d.month, 	# month
+				d.day, 		# day
+				d.hour, 	# hour
+				d.minute, 	# minute
+				d.second,	# second
+				time_zone,
+				dst]
+
+	reference_time = ''.join('{:02x}'.format(x) for x in ref_time)
+	
+	print(repr(reference_time))
+	add_event(EventType.reference_time, reference_time)
+
+
+def parse_local_time_information(value):
+	global time_zone
+	global dst
+
+	logging.info('parse_local_time_information')
+	time_zone = value[0]
+	dst = value[1]

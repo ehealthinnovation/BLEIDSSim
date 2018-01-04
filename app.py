@@ -1,5 +1,6 @@
 #http://blog.mrgibbs.io/bluez-5-39-ble-setup-on-the-raspberry-pi/
 
+import logging
 import dbus
 import dbus.mainloop.glib
 from bluetooth import *
@@ -15,6 +16,10 @@ app = None
 idsService = None
 idsCharacteristic = None
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 class Application(dbus.service.Object):
 	def __init__(self, bus):
 		self.path = '/'
@@ -25,6 +30,7 @@ class Application(dbus.service.Object):
 		self.add_service(IDSService(bus, 2))
 		self.add_service(ImmediateAlertService(bus, 3))
 		self.add_service(BondManagementService(bus, 4))
+		self.add_service(CurrentTimeService(bus, 5))
 
 	def get_path(self):
 		return dbus.ObjectPath(self.path)
@@ -35,7 +41,6 @@ class Application(dbus.service.Object):
 	@dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
 	def GetManagedObjects(self):
 		response = {}
-		#print('GetManagedObjects')
 
 		for service in self.services:
 			response[service.get_path()] = service.get_properties()
@@ -101,7 +106,7 @@ class BondManagementControlPointChrc(Characteristic):
 		self.notifying = False
 
 	def WriteValue(self, value, options):
-		print('BondManagementControlPointChrc write: ' + repr(value))
+		logger.info('BondManagementControlPointChrc write: ' + repr(value))
 		self.value = value
 
 class BondManagementFeatureChrc(Characteristic):
@@ -115,6 +120,75 @@ class BondManagementFeatureChrc(Characteristic):
 			service)
 		self.value = []
 		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0x00]
+
+class CurrentTimeService(Service):
+	CTS_UUID = '1805'
+	def __init__(self, bus, index):
+		Service.__init__(self, bus, index, self.CTS_UUID, True)
+		self.add_characteristic(CurrentTimeChrc(bus, 0, self))
+		self.add_characteristic(LocalTimeInformationChrc(bus, 1, self))
+		self.add_characteristic(ReferenceTimeInformationChrc(bus, 2, self))
+
+class CurrentTimeChrc(Characteristic):
+	CT_UUID = '2a2b'
+	
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.CT_UUID,
+			['read', 'write', 'notify'],
+			service)
+		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0x00]
+
+	def WriteValue(self, value, options):
+		logger.info('CurrentTimeInformationChrc write: ' + repr(value))
+		self.reply = parse_current_time(value)
+
+	def StartNotify(self):
+		if self.notifying:
+			logger.info('Already notifying, nothing to do')
+			return
+		self.notifying = True
+
+	def StopNotify(self):
+		if not self.notifying:
+			logger.info('Not notifying, nothing to do')
+			return
+		self.notifying = False
+
+class LocalTimeInformationChrc(Characteristic):
+	LTI_UUID = '2a0f'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.LTI_UUID,
+			['read', 'write'],
+			service)
+
+	def ReadValue(self, options):
+		return [0x00]
+
+	def WriteValue(self, value, options):
+		logger.info('LocalTimeInformationChrc write: ' + repr(value))
+		self.reply = parse_local_time_information(value)
+		
+
+class ReferenceTimeInformationChrc(Characteristic):
+	RTI_UUID = '2a14'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.RTI_UUID,
+			['read'],
+			service)
 
 	def ReadValue(self, options):
 		return [0x00]
@@ -138,7 +212,7 @@ class AlertLevelChrc(Characteristic):
 		self.notifying = False
 
 	def WriteValue(self, value, options):
-		print('AlertLevelChrc write: ' + repr(value))
+		logger.info('AlertLevelChrc write: ' + repr(value))
 		self.value = value
 
 class DeviceInformationService(Service):
@@ -239,7 +313,6 @@ class BatteryLevelCharacteristic(Characteristic):
 			service)
 		self.notifying = False
 		self.battery_lvl = 100
-		#GObject.timeout_add(5000, self.drain_battery)
 
 	def notify_battery_level(self):
 		if not self.notifying:
@@ -253,17 +326,16 @@ class BatteryLevelCharacteristic(Characteristic):
 			self.battery_lvl -= 2
 			if self.battery_lvl < 0:
 				self.battery_lvl = 0
-		#print('Battery Level drained: ' + repr(self.battery_lvl))
 		self.notify_battery_level()
 		return True
 
 	def ReadValue(self, options):
-		print('Battery Level read: ' + repr(self.battery_lvl))
+		logger.info('Battery Level read: ' + repr(self.battery_lvl))
 		return [dbus.Byte(self.battery_lvl)]
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 
 		self.notifying = True
@@ -271,7 +343,7 @@ class BatteryLevelCharacteristic(Characteristic):
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 
 		self.notifying = False
@@ -308,13 +380,13 @@ class IDDStatusChangedChrc(Characteristic):
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -336,13 +408,13 @@ class IDDStatusChrc(Characteristic):
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -364,13 +436,13 @@ class IDDAnnunciationStatusChrc(Characteristic):
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -407,25 +479,25 @@ class IDDStatusReaderControlPointChrc(Characteristic):
 	def notify_status_reader_control_point(self):
 		if not self.notifying:
 			return
-		print('response: ' + repr(self.reply))
+		logger.info('response: ' + repr(self.reply))
 		self.PropertiesChanged(
 			GATT_CHRC_IFACE,
 			{'Value': self.reply}, [])
 
 	def WriteValue(self, value, options):
-		print('IDDStatusReaderControlPointChrc write: ' + repr(value))
+		logger.info('IDDStatusReaderControlPointChrc write: ' + repr(value))
 		self.reply = parse_ids_status_reader_control_point(value)
 		self.notify_status_reader_control_point()
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -454,21 +526,9 @@ class IDDCommandControlPointChrc(Characteristic):
 			{'Value': [dbus.Byte(0)]}, [])
 
 	def WriteValue(self, value, options):
-		print('IDDCommandControlPointChrc write: ' + repr(value))
+		logger.info('IDDCommandControlPointChrc write: ' + repr(value))
 		self.reply = parse_ids_command_control_point(value)
-		#print(repr(self.reply))
-		#self.notify_command_control_point()
-
-		'''
-		for service in app.services:
-			if service.uuid == '1829':
-				idsService = service
 		
-		for characteristic in idsService.characteristics:
-			if characteristic.uuid == '2b01':
-				characteristic.notify_command_data([dbus.Byte(99)])
-		'''
-
 		for service in app.services:
 			if service.uuid == '1829':
 				for characteristic in service.characteristics:
@@ -477,13 +537,13 @@ class IDDCommandControlPointChrc(Characteristic):
 		
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -502,7 +562,7 @@ class IDDCommandDataChrc(Characteristic):
 			CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Command Data'))
 
 	def notify_command_data(self):
-		print('notify_command_data')
+		logger.info('notify_command_data')
 		if not self.notifying:
 			return
 		
@@ -516,13 +576,13 @@ class IDDCommandDataChrc(Characteristic):
 		
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -542,13 +602,13 @@ class IDDHistoryDataChrc(Characteristic):
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -575,19 +635,19 @@ class RecordAccessControlPointChrc(Characteristic):
 			{'Value': [dbus.Byte(67)]}, [])
 
 	def WriteValue(self, value, options):
-		print('RecordAccessControlPointChrc write: ' + repr(value))
+		logger.info('RecordAccessControlPointChrc write: ' + repr(value))
 		parse_racp(value)
 		self.notify_racp()
 
 	def StartNotify(self):
 		if self.notifying:
-			print('Already notifying, nothing to do')
+			logger.info('Already notifying, nothing to do')
 			return
 		self.notifying = True
 
 	def StopNotify(self):
 		if not self.notifying:
-			print('Not notifying, nothing to do')
+			logger.info('Not notifying, nothing to do')
 			return
 		self.notifying = False
 
@@ -595,13 +655,13 @@ def register_ad_cb():
 	"""
 	Callback if registering advertisement was successful
 	"""
-	print('Advertisement registered')
+	logger.info('Advertisement registered')
 
 def register_ad_error_cb(error):
 	"""
 	Callback if registering advertisement failed
 	"""
-	print('Failed to register advertisement: ' + str(error))
+	logger.error('Failed to register advertisement: ' + str(error))
 	mainloop.quit()
 
 
@@ -609,23 +669,23 @@ def register_app_cb():
 	"""
 	Callback if registering GATT application was successful
 	"""
-	print('GATT application registered')
+	logger.info('GATT application registered')
 
 
 def register_app_error_cb(error):
 	"""
 	Callback if registering GATT application failed.
 	"""
-	print('Failed to register application: ' + str(error))
+	logger.error('Failed to register application: ' + str(error))
 	mainloop.quit()
 
 def cleanup():
-	print('Cleaning up')
+	logger.info('Cleaning up')
 
-	print('Unregistering advertisement')
+	logger.info('Unregistering advertisement')
 	ad_manager.UnregisterAdvertisement(device_advertisement.get_path())
 
-	print('Unregistering application')
+	logger.info('Unregistering application')
 	service_manager.UnregisterApplication(app.get_path())
 	mainloop.quit()
 
@@ -636,8 +696,10 @@ def main():
 	global service_manager
 	global app
 
-	print('IDS Sensor')
+	#logging.basicConfig(level=logging.ERROR)
+	#logger = logging.getLogger(__name__)
 
+	logger.info('IDS Sensor')
 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 	bus = dbus.SystemBus()
@@ -652,18 +714,17 @@ def main():
 
 	mainloop = GObject.MainLoop()
 
-	# Register advertisement
-	print('Registering advertisement')
+	logger.info('Registering advertisement')
 	ad_manager.RegisterAdvertisement(device_advertisement.get_path(), {},
 									 reply_handler=register_ad_cb,
 									 error_handler=register_ad_error_cb)
 
-	# Register gatt services
-	print('Registering application')
+	logger.info('Registering application')
 	service_manager.RegisterApplication(app.get_path(), {},
 										reply_handler=register_app_cb,
 										error_handler=register_app_error_cb)
 
+	ids_init()
 	mainloop.run()
 
 
@@ -671,6 +732,6 @@ if __name__ == "__main__":
 	try:
 		main()
 	except KeyboardInterrupt:
-		print('W: interrupt received')
+		logger.info('W: interrupt received')
 	finally:
 		cleanup()

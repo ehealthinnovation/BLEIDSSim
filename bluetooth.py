@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-'''
-    IDS sensor
-'''
 
+import logging
 import array
-
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
@@ -14,12 +11,6 @@ try:
     from gi.repository import GObject
 except ImportError:
     import gobject as GObject
-#import sys
-
-#from random import randint
-
-
-#mainloop = None
 
 BLUEZ_SERVICE_NAME = 'org.bluez'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
@@ -66,7 +57,6 @@ class Application(dbus.service.Object):
     @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
     def GetManagedObjects(self):
         response = {}
-        #print('GetManagedObjects')
 
         for service in self.services:
             response[service.get_path()] = service.get_properties()
@@ -175,22 +165,22 @@ class Characteristic(dbus.service.Object):
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        logger.warning('Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        logger.warning('Default WriteValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StartNotify(self):
-        print('Default StartNotify called, returning error')
+        logger.warning('Default StartNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StopNotify(self):
-        print('Default StopNotify called, returning error')
+        logger.warning('Default StopNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.signal(DBUS_PROP_IFACE,
@@ -233,12 +223,12 @@ class Descriptor(dbus.service.Object):
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        logger.warning('Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_DESC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        logger.warning('Default WriteValue called, returning error')
         raise NotSupportedException()
 
 class Advertisement(dbus.service.Object):
@@ -301,17 +291,15 @@ class Advertisement(dbus.service.Object):
                          in_signature='s',
                          out_signature='a{sv}')
     def GetAll(self, interface):
-        #print('GetAll')
         if interface != LE_ADVERTISEMENT_IFACE:
             raise InvalidArgsException()
-        #print('returning props')
         return self.get_properties()[LE_ADVERTISEMENT_IFACE]
 
     @dbus.service.method(LE_ADVERTISEMENT_IFACE,
                          in_signature='',
                          out_signature='')
     def Release(self):
-        print('%s: Released!' % self.path)
+        logger.info('%s: Released!' % self.path)
 
 def find_adapter_gattmanager(bus):
     remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'),
@@ -342,7 +330,7 @@ def get_service_manager(bus):
     # Get the GattManager
     adapter_gattmanager = find_adapter_gattmanager(bus)
     if not adapter_gattmanager:
-        print('GattManager1 interface not found')
+        logger.error('GattManager1 interface not found')
         return
 
     service_manager = dbus.Interface(
@@ -356,7 +344,7 @@ def get_ad_manager(bus):
     # Get the AdapterManager
     adapter_advertisingmanager = find_adapter_advertisingmanager(bus)
     if not adapter_advertisingmanager:
-        print('LEAdvertisingManager1 interface not found')
+        logger.error('LEAdvertisingManager1 interface not found')
         return
 
     adapter_props = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter_advertisingmanager),
