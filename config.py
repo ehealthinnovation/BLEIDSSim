@@ -13,7 +13,7 @@ def get_config(path):
 def get_setting(path, section, setting):
 	config = get_config(path)
 	value = config.get(section, setting)
-	print "{section} {setting} is {value}".format(
+	print ("{section} {setting} is {value}").format(
 		section=section, setting=setting, value=value)
 	return value
 

@@ -69,8 +69,8 @@ class CharacteristicUserDescriptionDescriptor(Descriptor):
 
 	def __init__(self, bus, index, characteristic, description):
 		self.writable = 'writable-auxiliaries' in characteristic.flags
-		#self.value = array.array('B', b'testing')
-		self.value = array.array('B', description)
+		self.value = array.array('b')
+		self.value.frombytes(description.encode())
 		self.value = self.value.tolist()
 		Descriptor.__init__(
 			self, bus, index,

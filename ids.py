@@ -8,7 +8,6 @@ from crc import *
 from shortfloat import *
 from config import *
 from history import *
-from timer import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -1519,7 +1518,7 @@ def parse_current_time(value):
 	year_bytes = year_bytes[::-1]
 	year = ''.join(map(lambda b: format(b, "02x"), year_bytes))
 	d = datetime.datetime(int(year,16), value[2], value[3], value[4], value[5], value[6])
-	print d.year, d.month, d.day, d.hour, d.minute, d.second
+	print (d.year, d.month, d.day, d.hour, d.minute, d.second)
 	
 	print(repr(time_zone))
 	print(repr(dst))

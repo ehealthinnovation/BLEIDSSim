@@ -27,6 +27,6 @@ fi
 sudo /etc/init.d/bluetooth restart
 rm -rf *.pyc
 rm -rf __pycache__/
-python app.py
+python3 app.py
 
 
