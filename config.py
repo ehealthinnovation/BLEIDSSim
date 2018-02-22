@@ -1,29 +1,37 @@
-import configparser
+import logging
+from configparser import ConfigParser
 import os
 import collections
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def get_config(path):
 	if not os.path.exists(path):
 		create_config(path)
  
-	config = configparser.ConfigParser()
-	config.read(path)
-	return config
+	parser = ConfigParser()
+	parser.read(path)
+	return parser
 
 def get_setting(path, section, setting):
-	config = get_config(path)
-	value = config.get(section, setting)
-	print ("{section} {setting} is {value}").format(
-		section=section, setting=setting, value=value)
+	parser = ConfigParser()
+	parser = get_config(path)
+	value = parser.get(section, setting)
+	#print ("{section} {setting} is {value}").format(
+	#	section=section, setting=setting, value=value)
 	return value
 
 def update_setting(path, section, setting, value):
-	config = get_config(path)
-	config.set(section, setting, value)
-	with open(path, "wb") as config_file:
-		config.write(config_file)
-
+	logging.info('update_setting')
+	parser = ConfigParser()
+	parser = get_config(path)
+	parser.set(section, setting, value)
+	with open(path, "w") as config_file:
+		parser.write(config_file)
+	
 def get_dict(path, section):
-	config = get_config(path)
-	d = collections.OrderedDict(config.items(section))
+	parser = ConfigParser()
+	parser = get_config(path)
+	d = collections.OrderedDict(parser.items(section))
 	return d

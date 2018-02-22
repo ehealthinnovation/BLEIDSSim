@@ -1,5 +1,5 @@
 [FLIGHT_MODE]
-enabled = 1
+enabled = 0
 
 [THERAPY_CONTROL_STATE]
 state = 72

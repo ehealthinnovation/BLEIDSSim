@@ -11,3 +11,10 @@ def float_to_hex(f):
 
 def bytes(num):
     return hex(num >> 8), hex(num & 0xFF)
+
+def is_set(value, bit):
+    return value & 2**bit != 0
+
+def bytes_to_int16(value):
+	str = ''.join(map(lambda b: format(b, "02x"), value))
+	return int(str, 16)

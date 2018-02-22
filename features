@@ -1,6 +1,3 @@
-[GENERAL]
-name = IDS
-
 [FEATURES]
 ids_features_e2e_protection_supported = 1
 ids_features_basal_rate_supported = 1
@@ -18,12 +15,3 @@ ids_features_isf_profile_template_supported = 1
 ids_features_i2cho_ratio_profile_template_supported = 1
 ids_features_target_glucose_range_profile_template_supported = 1
 ids_features_insulin_onboard_supported = 1
-
-[ANNUNCIATION_STATUS]
-annunciation_present = 1
-auxInfo1_present = 0
-auxInfo2_present = 0
-auxInfo3_present = 0
-auxInfo4_present = 0
-auxInfo5_present = 0
-

@@ -1,0 +1,11 @@
+class IDSServiceCharacteristics(object):
+	service = '1829'
+	status_changed = '2adb'
+	status = '2adc'
+	annunciation = '2add'
+	features = '2ade'
+	status_reader_control_point = '2adf'
+	command_control_point = '2b00'
+	command_data = '2b01'
+	history = '2b02'
+	racp = '2a52'

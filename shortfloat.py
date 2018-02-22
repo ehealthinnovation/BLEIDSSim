@@ -18,6 +18,11 @@ MDER_NRES = 0x0800
 MDER_RESERVED_VALUE = 0x0801
 MDER_NEGATIVE_INFINITY = 0x0802
 
+def shortfloat_bytes_to_float(value):
+	str = ''.join(map(lambda b: format(b, "02x"), value))
+	result = int(str, 16)
+	return shortfloat_to_float(result)
+
 
 def shortfloat_to_float(short_float_number):
 	#number = int(short_float_number, 16)

@@ -5,6 +5,7 @@ import dbus
 import dbus.mainloop.glib
 from bluetooth import *
 from ids import *
+from service import *
 
 try:
 	from gi.repository import GObject
@@ -349,7 +350,9 @@ class BatteryLevelCharacteristic(Characteristic):
 		self.notifying = False
 
 class IDSService(Service):
-	IDS_UUID = '1829'
+	#IDS_UUID = '1829'
+	IDS_UUID = IDSServiceCharacteristics.service
+
 	def __init__(self, bus, index):
 		Service.__init__(self, bus, index, self.IDS_UUID, True)
 		self.add_characteristic(IDDStatusChangedChrc(bus, 0, self))
@@ -363,7 +366,8 @@ class IDSService(Service):
 		self.add_characteristic(RecordAccessControlPointChrc(bus, 8, self))
 
 class IDDStatusChangedChrc(Characteristic):
-	IDS_STATUS_CHANGED_UUID = '2adb'
+	#IDS_STATUS_CHANGED_UUID = '2adb'
+	IDS_STATUS_CHANGED_UUID = IDSServiceCharacteristics.status_changed
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -391,7 +395,8 @@ class IDDStatusChangedChrc(Characteristic):
 		self.notifying = False
 
 class IDDStatusChrc(Characteristic):
-	IDS_STATUS_UUID = '2adc'
+	#IDS_STATUS_UUID = '2adc'
+	IDS_STATUS_UUID = IDSServiceCharacteristics.status
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -402,6 +407,13 @@ class IDDStatusChrc(Characteristic):
 		self.notifying = False
 		self.add_descriptor(
 			CharacteristicUserDescriptionDescriptor(bus, 2, self, 'IDD Status'))
+
+	def notify_status(self):
+		if not self.notifying:
+			return
+		self.PropertiesChanged(
+			GATT_CHRC_IFACE,
+			{'Value': [dbus.Byte(5)]}, [])
 
 	def ReadValue(self, options):
 		return get_ids_status()
@@ -419,7 +431,8 @@ class IDDStatusChrc(Characteristic):
 		self.notifying = False
 
 class IDDAnnunciationStatusChrc(Characteristic):
-	IDS_ANNUNCIATION_STATUS_UUID = '2add'
+	#IDS_ANNUNCIATION_STATUS_UUID = '2add'
+	IDS_ANNUNCIATION_STATUS_UUID = IDSServiceCharacteristics.annunciation
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -447,7 +460,8 @@ class IDDAnnunciationStatusChrc(Characteristic):
 		self.notifying = False
 
 class IDDFeaturesChrc(Characteristic):
-	IDS_FEATURES_UUID = '2ade'
+	#IDS_FEATURES_UUID = '2ade'
+	IDS_FEATURES_UUID = IDSServiceCharacteristics.features
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -463,7 +477,8 @@ class IDDFeaturesChrc(Characteristic):
 		return get_ids_features()
 
 class IDDStatusReaderControlPointChrc(Characteristic):
-	IDS_STATUS_READER_CP_UUID = '2adf'
+	#IDS_STATUS_READER_CP_UUID = '2adf'
+	IDS_STATUS_READER_CP_UUID = IDSServiceCharacteristics.status_reader_control_point
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -486,8 +501,9 @@ class IDDStatusReaderControlPointChrc(Characteristic):
 
 	def WriteValue(self, value, options):
 		logger.info('IDDStatusReaderControlPointChrc write: ' + repr(value))
-		self.reply = parse_ids_status_reader_control_point(value)
-		self.notify_status_reader_control_point()
+		self.reply = parse_ids_status_reader_control_point(value, send_response)
+		#self.reply = parse_ids_status_reader_control_point(value)
+		#self.notify_status_reader_control_point()
 
 	def StartNotify(self):
 		if self.notifying:
@@ -503,7 +519,8 @@ class IDDStatusReaderControlPointChrc(Characteristic):
 
 
 class IDDCommandControlPointChrc(Characteristic):
-	IDS_COMMAND_CP_UUID = '2b00'
+	#IDS_COMMAND_CP_UUID = '2b00'
+	IDS_COMMAND_CP_UUID = IDSServiceCharacteristics.command_control_point
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -519,7 +536,9 @@ class IDDCommandControlPointChrc(Characteristic):
 
 	#return fixed value for testing
 	def notify_command_control_point(self):
+		logger.info('notify_command_control_point')
 		if not self.notifying:
+			logger.error('not notifying')
 			return
 		self.PropertiesChanged(
 			GATT_CHRC_IFACE,
@@ -527,13 +546,15 @@ class IDDCommandControlPointChrc(Characteristic):
 
 	def WriteValue(self, value, options):
 		logger.info('IDDCommandControlPointChrc write: ' + repr(value))
-		self.reply = parse_ids_command_control_point(value)
+		self.reply = parse_ids_command_control_point(value, send_response)
 		
+		'''
 		for service in app.services:
 			if service.uuid == '1829':
 				for characteristic in service.characteristics:
 					if characteristic.uuid == '2b01':
 						characteristic.notify_command_data()
+		'''
 		
 	def StartNotify(self):
 		if self.notifying:
@@ -549,7 +570,8 @@ class IDDCommandControlPointChrc(Characteristic):
 
 
 class IDDCommandDataChrc(Characteristic):
-	IDS_COMMAND_DATA_UUID = '2b01'
+	#IDS_COMMAND_DATA_UUID = '2b01'
+	IDS_COMMAND_DATA_UUID = IDSServiceCharacteristics.command_data
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -588,7 +610,8 @@ class IDDCommandDataChrc(Characteristic):
 
 
 class IDDHistoryDataChrc(Characteristic):
-	IDS_HISTORY_DATA_UUID = '2b02'
+	#IDS_HISTORY_DATA_UUID = '2b02'
+	IDS_HISTORY_DATA_UUID = IDSServiceCharacteristics.history
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -614,7 +637,8 @@ class IDDHistoryDataChrc(Characteristic):
 
 
 class RecordAccessControlPointChrc(Characteristic):
-	RACP_UUID = '2a52'
+	#RACP_UUID = '2a52'
+	RACP_UUID = IDSServiceCharacteristics.racp
 
 	def __init__(self, bus, index, service):
 		Characteristic.__init__(
@@ -688,6 +712,20 @@ def cleanup():
 	logger.info('Unregistering application')
 	service_manager.UnregisterApplication(app.get_path())
 	mainloop.quit()
+
+def send_response(target, data):
+	logger.info('send_response')
+	#logger.info(target)
+	#logger.info(data)
+	for service in app.services:
+			if service.uuid == '1829':
+				for characteristic in service.characteristics:
+					if characteristic.uuid == target:
+						logger.info('found characteristic')
+						characteristic.PropertiesChanged(
+							GATT_CHRC_IFACE,
+							{'Value': data}, [])
+
 
 def main():
 	global mainloop

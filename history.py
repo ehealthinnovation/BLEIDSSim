@@ -10,10 +10,10 @@ class Event(Base):
 	__tablename__ = 'events'
 
 	id = Column(Integer, primary_key=True)
-	event = Column(Integer)
-	sequence = Column(Integer, unique=True)
-	offset = Column(Integer)
-	data = Column(Text)
+	event = Column("Event", Integer)
+	sequence = Column("Sequence", Integer, unique=True)
+	offset = Column("Offset", Integer)
+	data = Column("Data", Text)
 
 	def __repr__(self):
 		return "<Event(event='%s', sequence='%s', offset='%s', data='%s')>" % (
@@ -55,21 +55,19 @@ class EventType(object):
 def history_init():
 	global counter
 	logger.info('history_init')
-	db_init()
 	get_latest_reference_time()
 	last_counter_value = get_last_counter_value()
 	if last_counter_value is not None:
 		counter = last_counter_value + 1
 	# otherwise, counter remains at zero
-	print(repr(counter))
+	#print(repr(counter))
 
-#this is called once at startup to get the last reference time
 def get_latest_reference_time():
 	logger.info('get_latest_reference_time')
-	last_ref_event = get_last_event(Event, Event.event, EventType.reference_time)
+	last_ref_event = get_last_row_for_object(Event, Event.event, EventType.reference_time)
 	print(repr(last_ref_event))
+	return last_ref_event
 
-#this should be called once at startup for better performance
 def get_last_counter_value():
 	logger.info('get_next_counter_value')
 	row_count = get_row_count(Event)
@@ -78,9 +76,8 @@ def get_last_counter_value():
 	else:
 		last_row = get_last_row(Event)
 		return last_row.sequence
-	
-#sequence number and offset should be automatically handled
-def add_event(event_type, event_data):
+
+def add_history_event(event_type, event_data):
 	global counter
 	logger.info('add_event')
 	add_entry(Event(event = event_type, sequence = counter, offset = 0, data = event_data))
