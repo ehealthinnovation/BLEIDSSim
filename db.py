@@ -53,6 +53,10 @@ def get_last_row(Object):
 	row = session.query(Object).order_by(desc('id')).first()
 	return row
 
+def get_rows_with_range(Object, field, start, end):
+	rows = session.query(Object).filter(field>=start, field<=end).all()
+	return rows
+
 def get_rows(Object, field, value):
 	logger.info('get_rows')
 	rows = session.query(Object).filter(field == value).all()
@@ -103,17 +107,12 @@ def delete_row(Object, field, value):
 		session.commit()
 		return result
 
-	
-
+'''
 def get_table_by_name(table_fullname):
-	'''
-	Return class reference mapped to table.
-
-	:param table_fullname: String with fullname of table.
-	:return: Class reference or None.
-	'''
 	for c in Base._decl_class_registry.values():
+		logger.info(c)
 		if hasattr(c, '__table__') and c.__table__.fullname == table_fullname:
+			logger.info('found table: ' + c)
 			return c
-
+'''
 

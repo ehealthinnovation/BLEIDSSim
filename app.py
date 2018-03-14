@@ -6,6 +6,8 @@ import dbus.mainloop.glib
 from bluetooth import *
 from ids import *
 from service import *
+from delivery import *
+import idsqueue
 
 try:
 	from gi.repository import GObject
@@ -19,7 +21,6 @@ idsCharacteristic = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 class Application(dbus.service.Object):
 	def __init__(self, bus):
@@ -711,12 +712,12 @@ def cleanup():
 
 	logger.info('Unregistering application')
 	service_manager.UnregisterApplication(app.get_path())
+	
+	cancel_all_delivery()
 	mainloop.quit()
 
 def send_response(target, data):
 	logger.info('send_response')
-	#logger.info(target)
-	#logger.info(data)
 	for service in app.services:
 			if service.uuid == '1829':
 				for characteristic in service.characteristics:
@@ -734,8 +735,10 @@ def main():
 	global service_manager
 	global app
 
-	#logging.basicConfig(level=logging.ERROR)
-	#logger = logging.getLogger(__name__)
+	# Register the signal handlers
+	#signal.signal(signal.SIGTERM, cleanup)
+	#signal.signal(signal.SIGINT, cleanup)
+	idsqueue.init()
 
 	logger.info('IDS Sensor')
 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)

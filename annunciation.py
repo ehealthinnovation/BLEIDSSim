@@ -1,5 +1,6 @@
 import logging
 from db import *
+from history import *
 
 counter = 0
 
@@ -14,7 +15,6 @@ class Annunciation(Base):
 	def __str__(self):
 		return "<Annunciation(annunciation_id,='%s', annunciation_type='%s', status='%s')>" % (
 			self.annunciation_id, self.annunciation_type, self.status)
-
 
 class AnnunciationTypeValues(object):
 	system_issue = 0x000F
@@ -68,7 +68,6 @@ def write_annunciation(annunciation_type, status):
 	result = add_entry(Annunciation(annunciation_id = counter,
 						  			annunciation_type = annunciation_type,
 						  			status = status))
-	
 	if result is True:
 		counter += 1
 	else:
@@ -93,8 +92,12 @@ def get_latest_annunciation():
 
 def set_annunciation_status(annunciation_id, status):
 	logger.info('set_annunciation_status')
-	result = update_arbitrary_row(Annunciation, 'annunciation_id', str(annunciation_id), 'status', status)
-	return result
+	update_arbitrary_row(Annunciation, 'annunciation_id', str(annunciation_id), 'status', status)
+	annunciation = get_row_for_object(Annunciation, Annunciation.annunciation_id, annunciation_id)
+
+	history_data = [0, annunciation.annunciation_id, annunciation.annunciation_type, annunciation.status]
+	add_history_event(EventType.annunciation_status_changed_1_of_2, history_data)
+	return True
 
 '''
 def snooze_annunciation(annunciation_id):

@@ -15,6 +15,8 @@ from status import *
 from statusChanged import *
 from bolus import *
 from service import *
+from datatypes import *
+from basal import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,187 +25,6 @@ time_zone = 0
 dst = 0
 crc_counter = 0
 full_reservoir_amount = 180
-
-
-class BolusTemplateFlags(object):
-	bolus_delay_time_present_bit = 0
-	bolus_delivery_reason_correction_bit = 1
-	bolus_delivery_reason_meal_bit = 2
-
-class TBRAdjustmentFlags(object):
-	tbr_template_number_present_bit = 0
-	tbr_delivery_context_present_bit = 1
-	change_tbr_bit = 2
-
-class BolusFlags(object):
-	bolus_delay_time_present_bit = 0
-	bolus_template_number_present_bit = 1
-	bolus_activation_type_present_bit = 0
-	bolus_delivery_reason_correction_bit = 0
-	bolus_delivery_reason_meal_bit = 0
-	
-class TherapyControlState(object):
-	undetermined = 0x0F
-	stop = 0x33
-	pause = 0x3C
-	run	= 0x55
-
-class OperationalState(object):
-	undetermined = 0x0F
-	off = 0x33
-	standby = 0x3C
-	preparing = 0x55
-	priming = 0x5A
-	waiting = 0x66
-	ready = 0x96
-
-class StatusReaderOpCodes(object):
-	response_code = 0x0303
-	reset_status = 0x030C
-	get_active_bolus_ids = 0x0330
-	get_active_bolus_ids_response = 0x033F
-	get_active_bolus_delivery = 0x0356
-	get_active_bolus_delivery_response = 0x0359
-	get_active_basal_rate_delivery = 0x0365
-	get_active_basal_rate_delivery_response = 0x036A
-	get_total_daily_insulin_status = 0x0395
-	get_total_daily_insulin_status_response = 0x039A
-	get_counter = 0x03A6
-	get_counter_response = 0x03A9
-	get_delivered_insulin = 0x03C0
-	get_delivered_insulin_response = 0x03CF
-	get_insulin_on_board = 0x03F3
-	get_insulin_on_board_response = 0x03FC
-
-class ResponseCodes(object):
-	success = 0x0F
-	op_code_not_supported = 0x70
-	invalid_operand = 0x71
-	procedure_not_completed = 0x72
-	parameter_out_of_range = 0x73
-	procedure_not_applicable = 0x74
-	plausibility_check_failed = 0x75
-	maximum_bolus_number_reached = 0x76
-
-class BolusValueSelection(object):
-	programmed = 0x0F
-	remaining = 0x33
-	delivered = 0x3C
-
-class BolusType(object):
-	undetermined = 0x0F
-	fast = 0x33
-	extended = 0x3C
-	multiwave = 0x55
-
-class BolusActivationType(object):
-	undetermined = 0x0F
-	manual_bolus = 0x33
-	recommended_bolus = 0x3C
-	manually_changed_recommended_bolus = 0x55
-	commanded_bolus = 0x5A
-
-class TBRType(object):
-	undetermined = 0x0F
-	absolute = 0x33
-	relative = 0x3C
-
-class BasalDeliveryContext(object):
-	undetermined = 0x0F
-	device_based = 0x33
-	remote_control = 0x3C
-	ap_controller = 0x55
-
-class CommandControlOpCodes(object):
-	response_code = 0x0F55
-	set_therapy_control_state = 0x0F5A
-	set_flight_mode = 0x0F66
-	snooze_annunciation = 0x0F69
-	snooze_annunciation_response = 0x0F96
-	confirm_annunciation = 0x0F99
-	confirm_annunciation_response = 0x0FA5
-	read_basal_rate_profile_template = 0x0FAA
-	read_basal_rate_profile_template_response = 0x0FC3
-	write_basal_rate_profile_template = 0x0FCC
-	write_basal_rate_profile_template_response = 0x0FF0
-	set_tbr_adjustment = 0x0FFF
-	cancel_tbr_adjustment = 0x1111
-	get_tbr_template = 0x111E
-	get_tbr_template_response = 0x1122
-	set_tbr_template = 0x112D
-	set_tbr_template_response = 0x1144
-	set_bolus = 0x114B
-	set_bolus_response = 0x1177
-	cancel_bolus = 0x1178
-	cancel_bolus_response = 0x1187
-	get_available_boluses = 0x1188
-	get_available_boluses_response = 0x11B4
-	get_bolus_template = 0x11BB
-	get_bolus_template_response = 0x11D2
-	set_bolus_template = 0x11DD
-	set_bolus_template_response = 0x11E1
-	get_template_status_and_details = 0x11EE
-	get_template_status_and_details_response = 0x1212
-	reset_template_status = 0x121D
-	reset_template_status_response = 0x1221
-	activate_profile_templates = 0x122E
-	activate_profile_templates_response = 0x1247
-	get_activated_profile_templates = 0x1248
-	get_activated_profile_templates_response = 0x1274
-	start_priming = 0x127B
-	stop_priming = 0x1284
-	set_initial_reservoir_fill_level = 0x128B
-	reset_reservoir_insulin_operation_time = 0x12B7
-	read_isf_profile_template = 0x12B8
-	read_isf_profile_template_response = 0x12D1
-	write_isf_profile_template = 0x12DE
-	write_isf_profile_template_response = 0x12E2
-	read_i2cho_ratio_profile_template = 0x12ED
-	read_i2cho_ratio_profile_template_response = 0x1414
-	write_i2cho_ratio_profile_template = 0x141B
-	write_i2cho_ratio_profile_template_response = 0x1427
-	read_target_glucose_range_profile_template = 0x1428
-	read_target_glucose_range_profile_template_response = 0x1441
-	write_target_glucose_range_profile_template = 0x144E
-	write_target_glucose_range_profile_template_response = 0x1472
-	get_max_bolus_amount = 0x147D
-	get_max_bolus_amount_response = 0x1482
-	set_max_bolus_amount = 0x148D
-
-class TemplateTypeValues(object):
-	undetermined = 0x0F
-	basal_rate_profile_template = 0x33
-	tbr_template = 0x3C
-	bolus_template = 0x55
-	isf_profile_template = 0x5A
-	i2cho_ratio_profile_template = 0x66
-	target_glucose_range_profile_template = 0x96
-
-class RecordAccessControlPointOpCodes(object):
-	response_code = 0x0F
-	report_stored_records = 0x33
-	delete_stored_records = 0x3C
-	abort_operation = 0x55
-	report_number_of_stored_records = 0x5A
-	number_of_stored_records_response = 0x66
-
-class RecordAccessControlPointOperators(object):
-	null = 0x0F
-	all_records = 0x33
-	less_than_or_equal_to = 0x3C
-	greater_than_or_equal_to = 0x55
-	within_range_of = 0x5A
-	first_record = 0x66
-	last_record = 0x69
-	
-class RecordAccessControlPointOperandFilters(object):
-	sequence_number = 0x0F
-	sequence_number_filtered_by_reference_time_event = 0x33
-	sequence_number_filtered_by_nonreference_time_event = 0x3C
-
-class RecordAccessControlPointResponseCodes(object):
-	procedure_not_applicable = 0x0A
-	success = 0xF0
 
 #TO-DO: command line argument to set the reference time without needing the collector to set it
 def ids_init():
@@ -217,7 +38,16 @@ def ids_init():
 	template_init()
 	time_zone = 0
 	dst = 0
-	
+
+	#value = [dbus.Byte(86), dbus.Byte(3), dbus.Byte(1), dbus.Byte(0), dbus.Byte(15), dbus.Byte(0), dbus.Byte(84), dbus.Byte(210)]
+	#handle_get_active_bolus_delivery(value, None)
+	#value = [dbus.Byte(75), dbus.Byte(17), dbus.Byte(0), dbus.Byte(51), dbus.Byte(75), dbus.Byte(240), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(0), dbus.Byte(61), dbus.Byte(151)]
+	#handle_set_bolus(value, None)
+	#store_basal(1, 1, 30.0, 5.0, 0, 0, 0, 0)
+	#value = [dbus.Byte(46), dbus.Byte(18), dbus.Byte(1), dbus.Byte(1), dbus.Byte(76), dbus.Byte(26)]
+	#handle_activate_profile_templates(value, None)
+	#handle_get_active_basal_rate_delivery(None)
+
 
  #TO-DO: get last status or set a default?
 def set_default_status():
@@ -248,6 +78,7 @@ def check_if_date_time_set():
 
 def crc_counter_is_valid():
 	return True
+
 
 def next_crc_counter_value():
 	return 0
@@ -363,7 +194,7 @@ def get_ids_features():
 	features.insert(1, crc >> 8)
 	return features
 
-# pg 24 (service document)
+# pg 24
 def get_ids_annunciation_status():
 	logger.info('get_ids_annunciation_status')
 	
@@ -408,22 +239,22 @@ def parse_ids_status_reader_control_point(value, callback):
 		response = handle_get_active_bolus_ids(callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_active_bolus_delivery:
-		response = handle_get_active_bolus_delivery(value)
+		response = handle_get_active_bolus_delivery(value, callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_active_basal_rate_delivery:
-		response = handle_get_active_basal_rate_delivery()
+		response = handle_get_active_basal_rate_delivery(callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_total_daily_insulin_status:
-		response = handle_get_total_daily_insulin_status()
+		response = handle_get_total_daily_insulin_status(callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_counter:
-		response = handle_get_counter(value)
+		response = handle_get_counter(value, callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_delivered_insulin:
-		response = handle_get_delivered_insulin()
+		response = handle_get_delivered_insulin(callback)
 		return response
 	elif opcode == StatusReaderOpCodes.get_insulin_on_board:
-		response = handle_get_insulin_on_board()
+		response = handle_get_insulin_on_board(callback)
 		return response
 		
 
@@ -467,10 +298,12 @@ def handle_get_active_bolus_ids(callback):
 	data = []
 
 	active_bolus_ids = get_active_bolus_ids()
+	#get_active_bolus_ids
 	logger.info(len(active_bolus_ids))
 
 	if len(active_bolus_ids) > 7:
 		logger.info('TO-DO: support >7 active bolus ids')
+		return
 
 	if len(active_bolus_ids) == 0:
 		logger.info('no active bolus ids')
@@ -483,126 +316,140 @@ def handle_get_active_bolus_ids(callback):
 		data.append(dbus.Byte(len(active_bolus_ids)))
 		for x in range(len(active_bolus_ids)):
 			logger.info(active_bolus_ids[x])
-			data.append(dbus.Byte(active_bolus_ids[x].number & 0xff))
-			data.append(dbus.Byte(active_bolus_ids[x].number >> 8))
+			data.append(dbus.Byte(active_bolus_ids[x].bolus_id & 0xff))
+			data.append(dbus.Byte(active_bolus_ids[x].bolus_id >> 8))
 		packet = build_response_packet(StatusReaderOpCodes.get_active_bolus_ids_response, data)
 	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
 
-def handle_get_active_bolus_delivery(value):
+#page 33/109
+def handle_get_active_bolus_delivery(value, callback):
 	logger.info('handle_get_active_bolus_delivery')
-	response = []
-	flags = 0
+	data = []
 
-	#extract the bolus id from the request packet
-	bolus_id_bytes = value[2:4]
-	bolus_flags = collections.OrderedDict((('Bolus_delay_time_present', 1),
-					 			 		   ('Bolus_template_number_present', 1),
-					 			 		   ('Bolus_activation_type_present', 1),
-								 		   ('Bolus_delivery_reason_correction', 1),
-								 		   ('Bolus_delivery_reason_meal', 1)))
+	bolus_id = bytes_to_int16(value[2:4][::-1])
+	logger.info(bolus_id)
+	bolus_value_selection = value[4]
+	logger.info(bolus_value_selection)
 
-	for key in bolus_flags:
-		if bolus_flags[key] == 1:
-			flags = set_bit(flags, int(bolus_flags.keys().index(key)))
+	bolus = get_bolus(bolus_id)
+	logger.info(bolus)
 
-	response.append(dbus.Byte(StatusReaderOpCodes.get_active_bolus_delivery_response & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.get_active_bolus_delivery_response >> 8))
-	response.append(dbus.Byte(flags))
+	if (bolus is None) or (bolus.active == 0):
+		logger.info('bolus does not exist or is not active')
+		data.append(dbus.Byte(CommandControlOpCodes.get_active_basal_rate_delivery & 0xff))
+		data.append(dbus.Byte(CommandControlOpCodes.get_active_basal_rate_delivery >> 8))
+		data.append(dbus.Byte(ResponseCodes.procedure_not_applicable))
+		packet = build_response_packet(StatusReaderOpCodes.response_code, data)
+		callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+		return
+
+	if (bolus_value_selection == BolusValueSelection.programmed) or (bolus_value_selection == BolusValueSelection.remaining) or (bolus_value_selection == BolusValueSelection.delivered):
+		logger.info('')
+	else:
+		logger.info('bolus value selection is not valid')
+		data.append(dbus.Byte(CommandControlOpCodes.get_active_basal_rate_delivery & 0xff))
+		data.append(dbus.Byte(CommandControlOpCodes.get_active_basal_rate_delivery >> 8))
+		data.append(dbus.Byte(ResponseCodes.invalid_operand))
+		packet = build_response_packet(StatusReaderOpCodes.response_code, data)
+		callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+		return
 	
-	#bolus ID
-	response.append(bolus_id_bytes[0])
-	response.append(bolus_id_bytes[1])
+	'''
+	If the Bolus Value Selection Operand is set to Delivered and the Bolus Delay Time field is present (i.e., Bolus Delay Time Present bit is set in Flags field), the Server shall set the Bolus Delay Time field to 0xFFFF to signal that the Bolus Delay Time is not applicable with that Bolus Value Selection Operand.
+	page 110
+	'''
+	if bolus_value_selection is BolusValueSelection.delivered:
+		if(is_set(bolus.flags, BolusFlags.bolus_delay_time_present_bit)):
+			bolus.delay_time = 0xFFFF
 
-	response.append(dbus.Byte(BolusType.fast))
+	'''
+	If the Bolus Type within the Active Bolus Delivery record is set to “Fast”, the Server shall set the Bolus Duration and the Bolus Extended Amount to 0.
+	'''
+	if bolus.bolus_type is BolusType.fast:
+		bolus.duration = 0
+		bolus.extended_amount = 0
 
-	fast_amount = float_to_shortfloat(5.22)
-	response.append(fast_amount & 0xff)
-	response.append(fast_amount >> 8)
+	'''
+	If the Bolus Type within the Active Bolus Delivery record is set to “Extended”, the Server shall set the Bolus Fast Amount to 0.
+	'''
+	if bolus is BolusType.extended:
+		bolus.fast_amount = 0
+
+	bolus_fast_amount = float_to_shortfloat(bolus.fast_amount)
+	bolus_extended_amount = float_to_shortfloat(bolus.extended_amount)
+
+	data.append(dbus.Byte(bolus.flags))
+	data.append(dbus.Byte(bolus.bolus_id & 0xff))
+	data.append(dbus.Byte(bolus.bolus_id >> 8))
+	data.append(dbus.Byte(bolus.bolus_type))
+	data.append(dbus.Byte(bolus_fast_amount & 0xff))
+	data.append(dbus.Byte(bolus_fast_amount >> 8))
+	data.append(dbus.Byte(bolus_extended_amount & 0xff))
+	data.append(dbus.Byte(bolus_extended_amount >> 8))
+	data.append(dbus.Byte(bolus.duration & 0xff))
+	data.append(dbus.Byte(bolus.duration >> 8))
 	
-	# set to all zeros if type is fast
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x00))
+	if(is_set(bolus.flags, BolusFlags.bolus_delay_time_present_bit)):
+		data.append(dbus.Byte(bolus.delay_time & 0xff))
+		data.append(dbus.Byte(bolus.delay_time >> 8))
+	
+	if(is_set(bolus.flags, BolusFlags.bolus_template_number_present_bit)):
+		data.append(dbus.Byte(bolus.template_number))
+	
+	if(is_set(bolus.flags, BolusFlags.bolus_activation_type_present_bit)):
+		data.append(dbus.Byte(bolus.activation_type))
+	
+	packet = build_response_packet(StatusReaderOpCodes.get_active_bolus_delivery_response, data)
+	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+	return
 
-	# bolus delay time (5 minutes)
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x05))
-
-	# bolus template number
-	response.append(dbus.Byte(0x01))
-
-	# bolus activation type
-	response.append(dbus.Byte(BolusActivationType.manual_bolus))
-
-	#crc counter
-	response.append(dbus.Byte(0x00))
-	crc = crc_calculate(response)
-	response.append(dbus.Byte(crc & 0xff))
-	response.append(dbus.Byte(crc >> 8))
-	return response
-
-def handle_get_active_basal_rate_delivery():
+#page 33/112
+def handle_get_active_basal_rate_delivery(callback):
 	logger.info('handle_get_active_basal_rate_delivery')
-	response = []
+	
+	#TO-DO
 	flags = 0
+	data = []
 
-	active_basal_rate_flags = collections.OrderedDict((('tbr_present', 1),
-					 			 ('tbr_template_number_present', 1),
-					 			 ('basal_delivery_context_present', 1)
-								))
+	templates_in_range = get_rows_with_range(TemplateLookup, TemplateLookup.template_number, TemplateRange.basal_rate_profile_template_range[0], (TemplateRange.basal_rate_profile_template_range[0] + len(TemplateRange.basal_rate_profile_template_range)))
+	logger.info(templates_in_range)
 
-	
-	for key in active_basal_rate_flags:
-		if active_basal_rate_flags[key] == 1:
-			flags = set_bit(flags, int(active_basal_rate_flags.keys().index(key)))
+	for template in templates_in_range:
+		if template.active == 1:
+			logger.info('found activated template number: ' + str(template.template_number))
+			basal_template = get_template_details(template.template_number)
+			logger.info(basal_template)
+			
+			first_rate = float_to_shortfloat(basal_template.first_rate)
 
-	response.append(dbus.Byte(StatusReaderOpCodes.get_active_basal_rate_delivery_response & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.get_active_basal_rate_delivery_response >> 8))
-	response.append(dbus.Byte(flags))
-	
-	# active basal rate profile template number
-	response.append(dbus.Byte(0x01))
-	
-	config_value = float_to_shortfloat(1.25)
-	response.append(config_value & 0xff)
-	response.append(config_value >> 8)
-	
-	response.append(dbus.Byte(TBRType.absolute))
+			data.append(dbus.Byte(flags))
+			data.append(dbus.Byte(basal_template.template_number))
+			data.append(dbus.Byte(first_rate & 0xff))
+			data.append(dbus.Byte(first_rate >> 8))
 
-	tbr_adjustment_value = float_to_shortfloat(1.43)
-	response.append(tbr_adjustment_value & 0xff)
-	response.append(tbr_adjustment_value >> 8)
-	
-	# time programmed (10 minutes)
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x0A))
+			#TO-DO: check if a TBR is active, add to packet if so
+			packet = build_response_packet(StatusReaderOpCodes.get_active_basal_rate_delivery_response, data)
+			callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+			return
 
-	# time remaining (9 minutes)
-	response.append(dbus.Byte(0x00))
-	response.append(dbus.Byte(0x09))
+	'''
+	If there is no currently active basal rate, the Server shall indicate the IDD Status Reader Control Point with a Response Code Op Code, a Request Op Code of
+	Get Active Basal Rate Delivery, and a Response Code Value in the Operand set to Procedure not applicable.
+	'''
+	logger.info('no active basal rate delivery')
 
-	# template number
-	response.append(dbus.Byte(0x01))
+	data.append(dbus.Byte(StatusReaderOpCodes.get_active_basal_rate_delivery & 0xff))
+	data.append(dbus.Byte(StatusReaderOpCodes.get_active_basal_rate_delivery >> 8))
+	data.append(dbus.Byte(ResponseCodes.procedure_not_applicable))
+	packet = build_response_packet(StatusReaderOpCodes.response_code, data)
+	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+	return
 
-	# basal delivery context
-	response.append(dbus.Byte(BasalDeliveryContext.device_based))
-	
-	#crc counter
-	response.append(dbus.Byte(0x00))
-	crc = crc_calculate(response)
-	response.append(dbus.Byte(crc & 0xff))
-	response.append(dbus.Byte(crc >> 8))
-	
-	return response
 
-def handle_get_total_daily_insulin_status():
+def handle_get_total_daily_insulin_status(callback):
 	logger.info('handle_get_total_daily_insulin_status')
 	response = []
 
-	response.append(dbus.Byte(StatusReaderOpCodes.get_total_daily_insulin_status_response & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.get_total_daily_insulin_status_response >> 8))
-	
 	total_daily_insulin_sum_of_bolus_delivered = float_to_shortfloat(1.25)
 	response.append(dbus.Byte(total_daily_insulin_sum_of_bolus_delivered & 0xff))
 	response.append(dbus.Byte(total_daily_insulin_sum_of_bolus_delivered >> 8))
@@ -615,15 +462,10 @@ def handle_get_total_daily_insulin_status():
 	response.append(dbus.Byte(total_daily_insulin_sum_of_bolus_and_basal_delivered & 0xff))
 	response.append(dbus.Byte(total_daily_insulin_sum_of_bolus_and_basal_delivered >> 8))
 
-	#crc counter
-	response.append(dbus.Byte(0x00))
-	crc = crc_calculate(response)
-	response.append(dbus.Byte(crc & 0xff))
-	response.append(dbus.Byte(crc >> 8))
-	
-	return response
+	packet = build_response_packet(StatusReaderOpCodes.get_total_daily_insulin_status_response, data)
+	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
 
-def handle_get_counter(value):
+def handle_get_counter(value, callback):
 	logger.info('handle_get_counter')
 	response = []
 
@@ -631,10 +473,10 @@ def handle_get_counter(value):
 	response.append(dbus.Byte(StatusReaderOpCodes.get_counter_response >> 8))
 
 	counter_type = value[2]
-	counter_value = value[3]
+	counter_value_selection = value[3]
 
 	response.append(dbus.Byte(counter_type))
-	response.append(dbus.Byte(counter_value))
+	response.append(dbus.Byte(counter_value_selection))
 
 	# counter value (minutes)
 	response.append(dbus.Byte(0x00))
@@ -642,15 +484,10 @@ def handle_get_counter(value):
 	response.append(dbus.Byte(0x00))
 	response.append(dbus.Byte(0x05))
 
-	#crc counter
-	response.append(dbus.Byte(0x00))
-	crc = crc_calculate(response)
-	response.append(dbus.Byte(crc & 0xff))
-	response.append(dbus.Byte(crc >> 8))
+	packet = build_response_packet(StatusReaderOpCodes.get_counter_response, data)
+	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
 
-	return response
-
-def handle_get_delivered_insulin():
+def handle_get_delivered_insulin(callback):
 	logger.info('handle_get_delivered_insulin')
 	response = []
 
@@ -682,12 +519,10 @@ def handle_get_delivered_insulin():
 	return response
 	'''
 
-def handle_get_insulin_on_board():
+def handle_get_insulin_on_board(callback):
 	logger.info('handle_get_insulin_on_board')
 	response = []
 
-	response.append(dbus.Byte(StatusReaderOpCodes.get_insulin_on_board_response & 0xff))
-	response.append(dbus.Byte(StatusReaderOpCodes.get_insulin_on_board_response >> 8))
 	response.append(dbus.Byte(0x01)) #flags byte
 	
 	insulin_onboard = float_to_shortfloat(2.05)
@@ -698,12 +533,9 @@ def handle_get_insulin_on_board():
 	response.append(dbus.Byte(0x00))
 	response.append(dbus.Byte(0x0d))
 	
-	#crc counter
-	response.append(dbus.Byte(0x00))
-	crc = crc_calculate(response)
-	response.append(dbus.Byte(crc & 0xff))
-	response.append(dbus.Byte(crc >> 8))
-	return response
+	packet = build_response_packet(StatusReaderOpCodes.get_insulin_on_board_response, data)
+	callback(IDSServiceCharacteristics.status_reader_control_point, packet)
+
 
 def parse_ids_command_control_point(value, callback):
 	logger.info('parse_ids_command_control_point')
@@ -814,8 +646,7 @@ def handle_set_therapy_control_state(value, callback):
 	data = []
 	state = value[2]
 	status = get_current_status()
-	logger.info(status)
-
+	
 	'''
 	If the therapy control state could not be set in the current application context (e.g., the Therapy Control State is set to Run although there is no inserted insulin reservoir), the Server shall indicate the IDD Command Control Point with a Response Code Op Code, a Request Op Code of Set Therapy Control State, and a Response Code Value in the Operand set to Procedure not applicable.
 	'''
@@ -840,11 +671,10 @@ def handle_set_therapy_control_state(value, callback):
 		callback(IDSServiceCharacteristics.command_control_point, packet)
 		return
 
-	#otherwise, set the therapy control state
+	#set the therapy control state
 	result = set_therapy_control_state(state)
-	logger.info(result)
 
-	#and return a response
+	#return a response
 	if result == True:
 		logger.info('therapy control state set successfully')
 		
@@ -909,9 +739,8 @@ def handle_snooze_annunciation(value, callback):
 		callback(IDSServiceCharacteristics.command_control_point, packet)
 		return
 	
-	# - Set the Annunciation Status field of the IDD Annunciation Status characteristic
-	set_annunciation_status(instance_id, AnnunciationStatusValues.snoozed)
-	logger.info('annunciation snoozed')
+	# - Finally, snooze the corresponding annunciation
+	snooze_annunciation(instance_id)
 	annunication = get_ids_annunciation_status()
 	callback(IDSServiceCharacteristics.annunciation, annunication)
 
@@ -921,9 +750,6 @@ def handle_snooze_annunciation(value, callback):
 	write_status_changed(status_changed)
 	status_changed = get_ids_status_changed()
 	callback(IDSServiceCharacteristics.status_changed, status_changed)
-
-	# - Finally, snooze the corresponding annunciation
-	snooze_annunciation(instance_id)
 
 	# - indicate the IDD Command Control Point with a Snooze Annunciation Response Op Code and the Annunciation Instance ID of the snoozed annunciation
 	data.append(dbus.Byte(instance_id & 0xff))
@@ -962,11 +788,8 @@ def handle_confirm_annunciation(value, callback):
 		callback(IDSServiceCharacteristics.command_control_point, packet)
 		return
 	
-	set_annunciation_status(instance_id, AnnunciationStatusValues.confirmed)
-	logger.info('annunciation confirmed')
-	
 	#NOTE: we do not normally confirm an annunciation, remove this, just for testing
-	set_annunciation_status(instance_id, AnnunciationStatusValues.confirmed)
+	confirm_annunciation(instance_id)
 	annunication = get_ids_annunciation_status()
 	callback(IDSServiceCharacteristics.annunciation, annunication)
 
@@ -1075,7 +898,7 @@ def handle_write_basal_rate_profile_template(value, callback):
 
 	first_duration = bytes_to_int16(value[5:7][::-1])
 	first_rate = shortfloat_bytes_to_float(value[7:9][::-1])
-	
+
 	if(is_set(flags, 1)):
 		second_duration = bytes_to_int16(value[9:11][::-1])
 		second_rate = shortfloat_bytes_to_float(value[11:13][::-1])
@@ -1121,6 +944,10 @@ def handle_write_basal_rate_profile_template(value, callback):
 	logger.info(result)
 
 	if result == True:
+		#page 165
+		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_rate]
+		add_history_event(EventType.basal_rate_profile_template_time_block_changed, history_data)
+
 		data.append(dbus.Byte(0x01)) #flags, transaction complete
 		data.append(dbus.Byte(template_number))
 		data.append(dbus.Byte(first_time_block_number_index))
@@ -1360,6 +1187,10 @@ def handle_set_tbr_template(value, callback):
 	logger.info(result)
 
 	if result == True:
+		#page 174
+		history_data = [int(template_number), int(tbr_type), tbr_adjustment_value, tbr_duration_value]
+		add_history_event(EventType.tbr_template_changed, history_data)
+
 		data.append(dbus.Byte(template_number))
 		packet = build_response_packet(CommandControlOpCodes.set_tbr_template_response, data)
 	else:
@@ -1373,11 +1204,12 @@ def handle_set_tbr_template(value, callback):
 
 #page 53/134
 def handle_set_bolus(value, callback):
-	print('handle_set_bolus')
-	print(value)
+	logger.info('handle_set_bolus')
+	logger.info(value)
 	data = []
 	procedure_not_applicable = 0
 	invalid_operand = 0
+	bolus_template_number = 0
 
 	flags = value[2]
 	bolus_type = value[3]
@@ -1481,36 +1313,43 @@ def handle_set_bolus(value, callback):
 		data.append(dbus.Byte(CommandControlOpCodes.set_bolus >> 8))
 		data.append(dbus.Byte(ResponseCodes.procedure_not_applicable))
 		packet = build_response_packet(CommandControlOpCodes.response_code, data)
-	elif (invalid_operand == 1):
+		return
+
+	if (invalid_operand == 1):
 		print('invalid_operand')
 		invalid_operand = 1
 		data.append(dbus.Byte(CommandControlOpCodes.set_bolus & 0xff))
 		data.append(dbus.Byte(CommandControlOpCodes.set_bolus >> 8))
 		data.append(dbus.Byte(ResponseCodes.invalid_operand))
 		packet = build_response_packet(CommandControlOpCodes.response_code, data)
-	else:
-		if (bolus_template_number_present == True):
-			template_number = value[12]
-			bolus_id = set_bolus_using_template(template_number)
-		else:
-			if(bolus_delay_time_present == True):
-				bolus_delay_time = bytes_to_int16(value[10:12][::-1])
-			else:
-				bolus_delay_time = 0
-
-			if(bolus_activation_type_present == True):
-				bolus_activation_type = value[13]
-			else:
-				bolus_activation_type = 0
-
-			bolus_id = set_bolus(bolus_type ,bolus_fast_amount, bolus_fast_amount, bolus_duration, bolus_delay_time, bolus_activation_type)
-
-		data.append(dbus.Byte(bolus_id & 0xff))
-		data.append(dbus.Byte(bolus_id >> 8))
-		packet = build_response_packet(CommandControlOpCodes.set_bolus_response, data)
+		return
+	
+	if (bolus_template_number_present == True):
+		bolus_template_number = value[12]
 		
-	callback(IDSServiceCharacteristics.command_control_point, packet)
+	if(bolus_delay_time_present == True):
+		bolus_delay_time = bytes_to_int16(value[10:12][::-1])
+	else:
+		bolus_delay_time = 0
 
+	if(bolus_activation_type_present == True):
+		bolus_activation_type = value[13]
+	else:
+		bolus_activation_type = 0
+
+	bolus_id = set_bolus(int(bolus_type) ,bolus_fast_amount, bolus_extended_amount, bolus_duration, bolus_delay_time, bolus_template_number, bolus_activation_type, callback)
+
+	status_changed = get_current_status_changed()
+	status_changed.active_bolus_status_changed = 1
+	write_status_changed(status_changed)
+	status_changed = get_ids_status_changed()
+	callback(IDSServiceCharacteristics.status_changed, status_changed)
+
+	data.append(dbus.Byte(bolus_id & 0xff))
+	data.append(dbus.Byte(bolus_id >> 8))
+	packet = build_response_packet(CommandControlOpCodes.set_bolus_response, data)
+	
+	callback(IDSServiceCharacteristics.command_control_point, packet)
 	
 
 ''' page 54/135
@@ -1731,6 +1570,10 @@ def handle_set_bolus_template(value, callback):
 
 	logger.info(result)
 	if result == True:
+		#page 173
+		history_data = [int(template_number), int(bolus_type), bolus_fast_amount, bolus_extended_amount, bolus_duration]
+		add_history_event(EventType.bolus_template_changed_1_of_2, history_data)
+
 		data.append(dbus.Byte(template_number))
 		packet = build_response_packet(CommandControlOpCodes.set_bolus_template_response, data)
 	else:
@@ -1745,10 +1588,10 @@ def handle_set_bolus_template(value, callback):
 #pg. 67/188
 def handle_get_template_status_and_details(callback):
 	print('handle_get_template_status_and_details')
-	data = []
-	configurable_and_configured_flags = 0
-	config_bits = 0
-	y = 0
+	#data = []
+	#configurable_and_configured_flags = 0
+	#config_bits = 0
+	#y = 0
 
 	'''
 	If the template type is not a Profile Template type, the value of the Max Number of Supported Time Blocks field shall be set to 0; otherwise this field shall not be set to 0.
@@ -1757,24 +1600,31 @@ def handle_get_template_status_and_details(callback):
 	The Configurable and Configured Flags field is an array of 2 bit values where the first bit is the configurable status of the template and the second bit is the configured status of the template. If the configurable bit, bit 0, is set to 1 (=true), then this template is configurable and can be configured by the Collector Application. If the configured bit, bit 1, is set to 1 (=true), then this template is configured and does contain data. The total number of elements in this array is the value of the Number of Templates field in Section 3.8.1.8.3. A padding of bits (set to 0) shall be appended if the number of elements of the Configurable and Configured Flags field does not fill a whole number of octets.
 	'''
 	supported = get_setting('features', 'FEATURES', 'ids_features_basal_rate_supported')
+	#logger.info('ids_features_basal_rate_supported: ' + str(supported))
 	if (supported == '1'):
+		y = 0
+		config_bits = 0
+		data = []
 		data.append(dbus.Byte(TemplateType.basal_rate_profile_template_type))
 		data.append(dbus.Byte(TemplateRange.basal_rate_profile_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.basal_rate_profile_template_range)-1))
 		data.append(dbus.Byte(24))
-		for x in range(TemplateRange.basal_rate_profile_template_range[0], len(TemplateRange.basal_rate_profile_template_range)-1):
+		for x in range(TemplateRange.basal_rate_profile_template_range[0], (TemplateRange.basal_rate_profile_template_range[0] + len(TemplateRange.basal_rate_profile_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info('config bits: ' + str(config_bits))
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
-
+		
 	supported = get_setting('features', 'FEATURES', 'ids_features_tbr_template_supported')
+	#logger.info('ids_features_tbr_template_supported: ' + str(supported))
 	if (supported == '1'):
 		y = 0
 		config_bits = 0
@@ -1783,19 +1633,22 @@ def handle_get_template_status_and_details(callback):
 		data.append(dbus.Byte(TemplateRange.tbr_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.tbr_template_range)-1))
 		data.append(dbus.Byte(0))
-		for x in range(TemplateRange.tbr_template_range[0], len(TemplateRange.tbr_template_range)-1):
+		for x in range(TemplateRange.tbr_template_range[0], (TemplateRange.tbr_template_range[0] + len(TemplateRange.tbr_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info('config bits: ' + str(config_bits))
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
 
 	supported = get_setting('features', 'FEATURES', 'ids_features_bolus_template_supported')
+	#logger.info('ids_features_bolus_template_supported: ' + str(supported))
 	if (supported == '1'):
 		y = 0
 		config_bits = 0
@@ -1804,19 +1657,22 @@ def handle_get_template_status_and_details(callback):
 		data.append(dbus.Byte(TemplateRange.bolus_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.bolus_template_range)-1))
 		data.append(dbus.Byte(0))
-		for x in range(TemplateRange.bolus_template_range[0], len(TemplateRange.bolus_template_range)-1):
+		for x in range(TemplateRange.bolus_template_range[0], (TemplateRange.bolus_template_range[0] + len(TemplateRange.bolus_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info(config_bits)
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
 
 	supported = get_setting('features', 'FEATURES', 'ids_features_isf_profile_template_supported')
+	#logger.info('ids_features_isf_profile_template_supported: ' + str(supported))
 	if (supported == '1'):
 		y = 0
 		config_bits = 0
@@ -1825,19 +1681,22 @@ def handle_get_template_status_and_details(callback):
 		data.append(dbus.Byte(TemplateRange.isf_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.isf_template_range)-1))
 		data.append(dbus.Byte(24))
-		for x in range(TemplateRange.isf_template_range[0], len(TemplateRange.isf_template_range)-1):
+		for x in range(TemplateRange.isf_template_range[0], (TemplateRange.isf_template_range[0] + len(TemplateRange.isf_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info(config_bits)
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
 
 	supported = get_setting('features', 'FEATURES', 'ids_features_i2cho_ratio_profile_template_supported')
+	#logger.info('ids_features_i2cho_ratio_profile_template_supported: ' + str(supported))
 	if (supported == '1'):
 		y = 0
 		config_bits = 0
@@ -1846,19 +1705,22 @@ def handle_get_template_status_and_details(callback):
 		data.append(dbus.Byte(TemplateRange.i2cho_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.i2cho_template_range)-1))
 		data.append(dbus.Byte(24))
-		for x in range(TemplateRange.i2cho_template_range[0], len(TemplateRange.i2cho_template_range)-1):
+		for x in range(TemplateRange.i2cho_template_range[0], (TemplateRange.i2cho_template_range[0] + len(TemplateRange.i2cho_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info(config_bits)
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
 
 	supported = get_setting('features', 'FEATURES', 'ids_features_target_glucose_range_profile_template_supported')
+	#logger.info('ids_features_target_glucose_range_profile_template_supported: ' + str(supported))
 	if (supported == '1'):
 		y = 0
 		config_bits = 0
@@ -1867,14 +1729,16 @@ def handle_get_template_status_and_details(callback):
 		data.append(dbus.Byte(TemplateRange.target_glucose_range_template_range[0]))
 		data.append(dbus.Byte(len(TemplateRange.target_glucose_range_template_range)-1))
 		data.append(dbus.Byte(24))
-		for x in range(TemplateRange.target_glucose_range_template_range[0], len(TemplateRange.target_glucose_range_template_range)-1):
+		for x in range(TemplateRange.target_glucose_range_template_range[0], (TemplateRange.target_glucose_range_template_range[0] + len(TemplateRange.target_glucose_range_template_range))):
 			template = get_template(x)
-			print(template)
+			#logger.info(x)
+			#logger.info(template)
 			if (template.configurable):
 				config_bits = set_bit(config_bits, y)
 			if (template.configured):
 				config_bits = set_bit(config_bits, y+1)
 			y+=2
+		#logger.info(config_bits)
 		data.append(dbus.Byte(config_bits))
 		packet = build_response_packet(CommandControlOpCodes.get_template_status_and_details_response, data)
 		callback(IDSServiceCharacteristics.command_data, packet)
@@ -1898,7 +1762,7 @@ def handle_reset_template_status(value, callback):
 	for template_number in range(0, int(number_of_templates_to_reset)):
 		print('reset template: ' + repr(int(value[template_number + 3])))
 		template = get_template(int(value[template_number + 3]))
-		if (template is None) or (template.configured == 0) or (template.configurable == 0) or (template.active == 0):
+		if (template is None) or (template.configured == 0) or (template.configurable == 0) or (template.active == 1):
 			logger.info('issue resetting template')
 			data.append(dbus.Byte(CommandControlOpCodes.reset_template_status  & 0xff))
 			data.append(dbus.Byte(CommandControlOpCodes.reset_template_status >> 8))
@@ -1921,14 +1785,15 @@ def handle_activate_profile_templates(value, callback):
 	print('handle_activate_profile_templates')
 	print(value)
 	data = []
+	templates = []
 
 	number_of_templates_to_activate = value[2]
 	print('number of templates to activate: ' + repr(int(number_of_templates_to_activate)))
 	
 	for template_number in range(0, int(number_of_templates_to_activate)):
 		print('activate template: ' + repr(int(value[template_number + 3])))
-		#template = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
 		template = get_template(int(value[template_number + 3]))
+		templates.append(template)
 		logger.info(template)
 		if (template is None) or (template.configured == 0):
 			logger.info('issue activating template')
@@ -1943,12 +1808,12 @@ def handle_activate_profile_templates(value, callback):
 			callback(IDSServiceCharacteristics.command_control_point, packet)
 			return
 		else:
-			activate_template(int(value[template_number + 3]))
+			activate_templates(templates)
+			#activate_template(int(value[template_number + 3]))
 
 	data.append(dbus.Byte(number_of_templates_to_activate))
 	for template_number in range(0, int(number_of_templates_to_activate)):
 		data.append(dbus.Byte(int(value[template_number + 3])))
-		#data.append(dbus.Byte(template_number)) #??
 
 	packet = build_response_packet(CommandControlOpCodes.activate_profile_templates_response, data)
 	callback(IDSServiceCharacteristics.command_control_point, packet)
@@ -1965,7 +1830,8 @@ def handle_get_activated_profile_templates(callback):
 
 	if number_of_activated_templates > 0:
 		logger.info('appending activated templates')
-		for i in range(0, len(rows)):
+		#for i in range(0, len(rows)):
+		for i in range(0, number_of_activated_templates):
 			logger.info(i)
 			template = rows[i]
 			logger.info(template)
@@ -1989,6 +1855,9 @@ def handle_start_priming(value, callback):
 	
 	start_priming(priming_amount)
 	
+	# pg.171
+	add_history_event(EventType.priming_started, repr(priming_amount))
+
 	data.append(dbus.Byte(CommandControlOpCodes.start_priming  & 0xff))
 	data.append(dbus.Byte(CommandControlOpCodes.start_priming >> 8))
 	data.append(dbus.Byte(ResponseCodes.success))
@@ -2169,6 +2038,10 @@ def handle_write_isf_profile_template(value, callback):
 	logger.info(result)
 
 	if result == True:
+		#page 170
+		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_isf]
+		add_history_event(EventType.isf_profile_template_time_block_changed, history_data)
+
 		data.append(dbus.Byte(0x01)) # flags
 		data.append(dbus.Byte(template_number))
 		data.append(dbus.Byte(first_time_block_number_index))
@@ -2305,6 +2178,10 @@ def handle_write_i2cho_ratio_profile_template(value, callback):
 	logger.info(result)
 
 	if result == True:
+		#page 170
+		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_ratio]
+		add_history_event(EventType.i2cho_ratio_profile_template_time_block_changed, history_data)
+
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
 		data.append(dbus.Byte(template_number))
 		data.append(dbus.Byte(first_time_block_number_index))
@@ -2419,6 +2296,10 @@ def handle_write_target_glucose_range_profile_template(value, callback):
 	logger.info(result)
 
 	if result == True:
+		#page 171
+		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_lower_target_glucose_limit, first_upper_target_glucose_limit]
+		add_history_event(EventType.target_glucose_range_profile_template_time_block_changed, history_data)
+
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
 		data.append(dbus.Byte(template_number))
 		data.append(dbus.Byte(first_time_block_number_index))
@@ -2546,24 +2427,17 @@ def parse_current_time(value):
 	d = datetime.datetime(int(year,16), value[2], value[3], value[4], value[5], value[6])
 	print (d.year, d.month, d.day, d.hour, d.minute, d.second)
 	
-	print(repr(time_zone))
-	print(repr(dst))
-
 	ref_time = [0x0F, 		# reason
-				value[0], 	# year
-				value[1], 	# year
+				d.year,
 				d.month, 	# month
 				d.day, 		# day
 				d.hour, 	# hour
 				d.minute, 	# minute
 				d.second,	# second
-				time_zone,
-				dst]
+				int(time_zone),
+				int(dst)]
 
-	reference_time = ''.join('{:02x}'.format(x) for x in ref_time)
-	
-	print(repr(reference_time))
-	add_history_event(EventType.reference_time, reference_time)
+	add_history_event(EventType.reference_time, ref_time)
 
 
 def parse_local_time_information(value):

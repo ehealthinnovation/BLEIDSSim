@@ -5,15 +5,18 @@ from status import *
 from helper import *
 from bolus import *
 from history import *
+from annunciation import *
+from delivery import *
+from datatypes import *
+from statusChanged import *
+from template import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 flight_mode = 0
-therapy_control_state = 0
 tbr_adjustment_active = 0
 bolus_id = 0
-active_bolus_ids = []
 active_bolus_delivery = 0
 max_bolus = 0
 is_priming = 0
@@ -24,31 +27,29 @@ def logic_init():
 '''
 IDS Status Reader Control Point
 '''
-def get_active_bolus_ids():
-	logger.info('get_active_bolus_ids')
-	global active_bolus_ids
-	logger.info(active_bolus_ids)
-	return active_bolus_ids
-
+#KT
+#def get_active_bolus_ids():
+#	logger.info('get_active_bolus_ids')
+	#global active_bolus_ids
+	#logger.info(active_bolus_ids)
+	#return 0
 
 '''
 IDS Command Control Point
 '''
-
-#TO-DO: if state = the current state, return error or success?
-#TO-DO: log history event
 def set_therapy_control_state(state):
 	global therapy_control_state
 	logger.info('set_therapy_control_state')	
-	logger.info(state)
 	status = get_current_status()
+	previous_therapy_control_state = status.therapy_control_state
 	status.therapy_control_state = state
 	result = write_status(status)
-	logger.info(result)
 	if result == True:
-		therapy_control_state = state
+		#page 166
+		history_data = [previous_therapy_control_state, int(state)]
+		add_history_event(EventType.therapy_control_state_changed, history_data)
 	return result
-
+	
 def set_flight_mode(enabled):
 	logger.info('set_flight_mode')
 	global flight_mode
@@ -56,9 +57,11 @@ def set_flight_mode(enabled):
 
 def snooze_annunciation(annunciation_id):
 	logger.info('snooze_annunciation')
-
+	set_annunciation_status(annunciation_id, AnnunciationStatusValues.snoozed)
+	
 def confirm_annunciation(annunciation_id):
 	logger.info('confirm_annunciation')
+	set_annunciation_status(annunciation_id, AnnunciationStatusValues.confirmed)
 
 def tbr_adjustment_set_active(active):
 	logger.info('tbr_adjustment_set_active')
@@ -80,22 +83,31 @@ def set_tbr_adjustment_using_template(template_number):
 def cancel_tbr_adjustment():
 	logger.info('cancel_tbr_adjustment')
 
-def set_bolus_using_template(template_number):
-	logger.info('set_bolus_using_template')
-	global bolus_id
-	bolus_id += 1
-	active_bolus_ids.append(bolus_id)
-	return bolus_id
+def activate_templates(templates):
+	logger.info('activate_templates')
+	logger.info(templates)
+	
+	for template in templates:
+		logger.info(template.template_number)
+		result = activate_template(template.template_number)
+		
+	return result
 
-def set_bolus(type ,fast_amount, extended_amount, duration, delay_time, activation_type):
+def bolus_delivery_complete():
+	logger.info('bolus_delivery_complete')
+
+def set_bolus(bolus_type ,fast_amount, extended_amount, duration, delay_time, template_number, activation_type, callback):
 	logger.info('set_bolus')
-	global bolus_id
-	bolus_id += 1
-	active_bolus_id = Bolus(bolus_id, type, fast_amount, extended_amount, duration, delay_time, activation_type)
-	active_bolus_ids.append(active_bolus_id)
-	print(repr(active_bolus_ids))
+	bolus_id = get_next_available_bolus_id()
+	store_bolus(bolus_id, bolus_type, fast_amount, extended_amount, duration, delay_time, template_number, activation_type, 1)
+	if bolus_type is BolusType.fast:
+		deliver_single_shot_bolus(fast_amount)
+	if bolus_type is BolusType.extended:
+		deliver_extended_bolus(bolus_id, extended_amount, duration, bolus_delivery_complete)
+
 	return bolus_id
 
+#KT
 def cancel_bolus(bolus_id):
 	logger.info('cancel_bolus')
 	for bolus in active_bolus_ids:
@@ -110,8 +122,6 @@ def start_priming(priming_amount):
 	logger.info('start priming')
 	global is_priming
 	is_priming = 1
-	# pg.171
-	add_history_event(EventType.priming_started, repr(priming_amount))
 
 def stop_priming():
 	logger.info('stop priming')
@@ -134,7 +144,11 @@ def reset_reservoir_insulin_operation_time():
 def set_max_bolus(amount):
 	logger.info('set max bolus')
 	global max_bolus
+	old_max_bolus_amount = max_bolus
 	max_bolus = amount
+	#page 175
+	history_data = [old_max_bolus_amount, max_bolus]
+	add_history_event(EventType.max_bolus_amount_changed, history_data)
 
 def get_max_bolus():
 	logger.info('get max bolus')
@@ -142,3 +156,6 @@ def get_max_bolus():
 	logger.info(max_bolus)
 	return max_bolus
 
+
+
+# delivery methods

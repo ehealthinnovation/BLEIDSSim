@@ -18,3 +18,8 @@ def is_set(value, bit):
 def bytes_to_int16(value):
 	str = ''.join(map(lambda b: format(b, "02x"), value))
 	return int(str, 16)
+
+def get_class_attributes(class_name):
+	this_class = class_name
+	attributes = [attr for attr in dir(this_class) if not callable(getattr(this_class, attr)) and not attr.startswith("__")]
+	return attributes

@@ -12,12 +12,12 @@ class Event(Base):
 	id = Column(Integer, primary_key=True)
 	event = Column("Event", Integer)
 	sequence = Column("Sequence", Integer, unique=True)
-	offset = Column("Offset", Integer)
-	data = Column("Data", Text)
+	#offset = Column("Offset", Integer)
+	data = Column("Data", String(128))
 
 	def __repr__(self):
-		return "<Event(event='%s', sequence='%s', offset='%s', data='%s')>" % (
-			self.event, self.sequence, self.offset, self.data)
+		return "<Event(event='%s', sequence='%s', data='%s')>" % (
+			self.event, self.sequence, self.data)
 
 class EventType(object):
 	reference_time = 0x000F
@@ -79,8 +79,18 @@ def get_last_counter_value():
 
 def add_history_event(event_type, event_data):
 	global counter
-	logger.info('add_event')
-	add_entry(Event(event = event_type, sequence = counter, offset = 0, data = event_data))
+	logger.info('add_history_event')
+	#event_data_str = ",".join(map(str, event_data))
+	#event_data_str = ','.join(str(x) for x in event_data)
+	#event_data_str = ",".join(str(x) for x in event_data)
+	event_data_str = ",".join(map(str, event_data))
+	logger.info(event_data_str)
+	add_entry(Event(event = event_type, sequence = counter, data = event_data_str))
 	counter += 1
 
+#ef get_history_event():
+	#get entry from event tablr
+
+	#convert string to list
+	#data = event.data.split(",")
 

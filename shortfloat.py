@@ -44,7 +44,10 @@ def shortfloat_to_float(short_float_number):
 
 	float_mantissa = float(mantissa)
 
-	return float_mantissa * float(pow(10, float(exponent)/1))
+	result = float_mantissa * float(pow(10, float(exponent)/1))
+
+	return round(result,1)
+	#return float_mantissa * float(pow(10, float(exponent)/1))
 
 
 def float_to_shortfloat(number):

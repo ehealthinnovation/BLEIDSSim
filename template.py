@@ -2,18 +2,20 @@ import logging
 import os
 from db import *
 from config import *
-
+from helper import *
+from history import *
+from datatypes import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TemplateRange(object):
-	basal_rate_profile_template_range = range(0, 5)
-	tbr_template_range = range(5, 10)
-	bolus_template_range = range(10, 15)
-	isf_template_range = range(15, 20)
-	i2cho_template_range = range(20, 25)
-	target_glucose_range_template_range = range(30, 35)
+	basal_rate_profile_template_range = range(1, 4)
+	tbr_template_range = range(10, 14)
+	bolus_template_range = range(20, 24)
+	isf_template_range = range(30, 34)
+	i2cho_template_range = range(40, 44)
+	target_glucose_range_template_range = range(50, 54)
 
 class TemplateType(object):
 	basal_rate_profile_template_type = 0x33
@@ -27,7 +29,7 @@ class TemplateLookup(Base):
     __tablename__ = 'template_lookup'
     id = Column(Integer, primary_key=True)
     template_number = Column("Template Number", Integer, unique=True)
-    template_type = Column("Template Type", Integer, default = 15) #0x0F = undetermined
+    template_type = Column("Template Type", Integer, default = 15)
     table_name = Column("Table Name", String)
     active = Column("Active", Integer, default=0)
     configurable = Column("Configurable", Integer, default=0)
@@ -145,7 +147,8 @@ class TargetGlucoseTemplate(Base):
 def template_init():
 	logger.info('template_init')
 	if (get_setting('features', 'FEATURES', 'ids_features_basal_rate_supported') == '1'):
-		for x in range(TemplateRange.basal_rate_profile_template_range[0], TemplateRange.basal_rate_profile_template_range[-1]):
+		#for x in range(TemplateRange.basal_rate_profile_template_range[0], TemplateRange.basal_rate_profile_template_range[-1]):
+		for x in range(TemplateRange.basal_rate_profile_template_range[0], (TemplateRange.basal_rate_profile_template_range[0] + len(TemplateRange.basal_rate_profile_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x33,
 											  active = 0,
@@ -153,7 +156,8 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_tbr_template_supported') == '1'):
-		for x in range(TemplateRange.tbr_template_range[0], TemplateRange.tbr_template_range[-1]):
+		#for x in range(TemplateRange.tbr_template_range[0], TemplateRange.tbr_template_range[-1]):
+		for x in range(TemplateRange.tbr_template_range[0], (TemplateRange.tbr_template_range[0] + len(TemplateRange.tbr_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x3C,
 											  active = 0,
@@ -161,7 +165,8 @@ def template_init():
 											  configured = 0))
 	
 	if (get_setting('features', 'FEATURES', 'ids_features_bolus_template_supported') == '1'):
-		for x in range(TemplateRange.bolus_template_range[0], TemplateRange.bolus_template_range[-1]):
+		#for x in range(TemplateRange.bolus_template_range[0], TemplateRange.bolus_template_range[-1]):
+		for x in range(TemplateRange.bolus_template_range[0], (TemplateRange.bolus_template_range[0] + len(TemplateRange.bolus_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x55,
 											  active = 0,
@@ -169,7 +174,8 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_isf_profile_template_supported') == '1'):
-		for x in range(TemplateRange.isf_template_range[0], TemplateRange.isf_template_range[-1]):
+		#for x in range(TemplateRange.isf_template_range[0], TemplateRange.isf_template_range[-1]):
+		for x in range(TemplateRange.isf_template_range[0], (TemplateRange.isf_template_range[0] + len(TemplateRange.isf_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x5A,
 											  active = 0,
@@ -177,7 +183,8 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_i2cho_ratio_profile_template_supported') == '1'):
-		for x in range(TemplateRange.i2cho_template_range[0], TemplateRange.i2cho_template_range[-1]):
+		#for x in range(TemplateRange.i2cho_template_range[0], TemplateRange.i2cho_template_range[-1]):
+		for x in range(TemplateRange.i2cho_template_range[0], (TemplateRange.i2cho_template_range[0] + len(TemplateRange.i2cho_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x66,
 											  active = 0,
@@ -185,7 +192,8 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_target_glucose_range_profile_template_supported') == '1'):
-		for x in range(TemplateRange.target_glucose_range_template_range[0], TemplateRange.target_glucose_range_template_range[-1]):
+		#for x in range(TemplateRange.target_glucose_range_template_range[0], TemplateRange.target_glucose_range_template_range[-1]):
+		for x in range(TemplateRange.target_glucose_range_template_range[0], (TemplateRange.target_glucose_range_template_range[0] + len(TemplateRange.target_glucose_range_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x96,
 											  active = 0,
@@ -395,30 +403,137 @@ def get_target_glucose_template(template_number):
 
 def reset_template_status(template_number):
 	logger.info('reset_template_status')
-	result = update_arbitrary_row(TemplateLookup, 'template_number', str(template_number), 'active', 0)
+	result = update_arbitrary_row(TemplateLookup, 'template_number', str(template_number), 'configured', 0)
 	logger.info(result)
 	return result
 
 def activate_template(template_number):
 	logger.info('activate_template')
-	result = update_arbitrary_row(TemplateLookup, 'template_number', str(template_number), 'active', 1)
-	logger.info(result)
-	return result
+	previously_activated_template = 0
+	template_ranges = get_class_attributes(TemplateRange())
+	
+	for template_range in template_ranges:
+		current_range = getattr(TemplateRange(), template_range)
+		logger.info(current_range)
+		if template_number in current_range:
+			logger.info('template number exists in ' + template_range)
+			template_type = get_template_type_for_range(current_range)
+			templates_in_range = get_rows_with_range(TemplateLookup, TemplateLookup.template_number, current_range[0], (current_range[0] + len(current_range)))
+			
+			for template in templates_in_range:
+				if template.active == 1:
+					logger.info('found activated template number: ' + str(template.template_number))
+					previously_activated_template = template.template_number
+					result = update_arbitrary_row(TemplateLookup, 'template_number', str(template.template_number), 'active', 0)
+					logger.info('deactivated template number: ' + str(template.template_number))
+	
+	result = update_arbitrary_row(TemplateLookup, 'template_number', str(template_number), 'active', 1)				
+	history_data = [template_type, previously_activated_template, template_number]
+
+	#page 164
+	add_history_event(EventType.profile_template_activated, history_data)
+	return True
 
 def get_template(template_number):
 	logger.info('get_template')
 	template = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
-	logger.info(template)
 	return template
 
+'''
 def get_template_details(template_number):
+	logger.info('get_template_details')
+	logger.info(template_number)
 	row = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
+	logger.info(row)
 	if row is not None:
-		table = get_table_by_name(row.table_name)
-		template = get_row_for_object(table, table.template_number, row.template_number)
+		table = get_table_by_template_type(row.template_type)
+		if table is None:
+			logger.info('ERROR: table not found!')
+			return None
+		else:
+			template = get_row_for_object(table, table.template_number, row.template_number)
+		
 		if template is not None:
 			return template
 		else:
 			return None
 	else:
 		return None
+'''
+
+def get_template_details(template_number):
+	logger.info('get_template_details')
+	logger.info(template_number)
+	table = get_table_by_template_number(template_number)
+
+	if table is None:
+		return None
+	else:
+		template = get_row_for_object(table, table.template_number, template_number)
+		return template		
+
+def get_table_by_template_number(template_number):
+	row = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
+	template_type = row.template_type
+
+	if template_type is TemplateTypeValues.basal_rate_profile_template:
+		return BasalRateProfileTemplate
+	if template_type is TemplateTypeValues.tbr_template:
+		return TBRTemplate
+	if template_type is TemplateTypeValues.bolus_template:
+		return BolusTemplate
+	if template_type is TemplateTypeValues.isf_profile_template:
+		return ISFTemplate
+	if template_type is TemplateTypeValues.i2cho_ratio_profile_template:
+		return I2CHOTemplate
+	if template_type is TemplateTypeValues.target_glucose_range_profile_template:
+		return TargetGlucoseTemplate
+
+	logger.info('ERROR: table not found!')
+	return None
+
+
+def get_table_by_template_type(template_type):
+	if template_type is TemplateTypeValues.basal_rate_profile_template:
+		return BasalRateProfileTemplate
+	if template_type is TemplateTypeValues.tbr_template:
+		return TBRTemplate
+	if template_type is TemplateTypeValues.bolus_template:
+		return BolusTemplate
+	if template_type is TemplateTypeValues.isf_profile_template:
+		return ISFTemplate
+	if template_type is TemplateTypeValues.i2cho_ratio_profile_template:
+		return I2CHOTemplate
+	if template_type is TemplateTypeValues.target_glucose_range_profile_template:
+		return TargetGlucoseTemplate
+
+'''
+def get_template_type(template_number):
+	logger.info('get_template_type')
+	if template_number in TemplateRange.basal_rate_profile_template_range:
+		return TemplateType.basal_rate_profile_template_type
+	if template_number in TemplateRange.tbr_template_range:
+		return TemplateType.tbr_template_type
+	if template_number in TemplateRange.bolus_template_range:
+		return TemplateType.bolus_template_type
+	if template_number in TemplateRange.isf_template_range:
+		return TemplateType.isf_profile_template_type
+	if template_number in TemplateRange.i2cho_template_range:
+		return TemplateType.i2cho_template_type
+	if template_number in TemplateRange.target_glucose_range_template_range:
+		return TemplateType.target_glucose_template_type
+'''
+
+def get_template_type_for_range(range):
+	if range is TemplateRange.basal_rate_profile_template_range:
+		return TemplateType.basal_rate_profile_template_type
+	if range is TemplateRange.tbr_template_range:
+		return TemplateType.tbr_template_type
+	if range is TemplateRange.bolus_template_range:
+		return TemplateType.bolus_template_type
+	if range is TemplateRange.isf_template_range:
+		return TemplateType.isf_profile_template_type
+	if range is TemplateRange.i2cho_template_range:
+		return TemplateType.i2cho_template_type
+	if range is TemplateRange.target_glucose_range_template_range:
+		return TemplateType.target_glucose_template_type
