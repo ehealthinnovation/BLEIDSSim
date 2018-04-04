@@ -23,3 +23,11 @@ def get_class_attributes(class_name):
 	this_class = class_name
 	attributes = [attr for attr in dir(this_class) if not callable(getattr(this_class, attr)) and not attr.startswith("__")]
 	return attributes
+
+def bit(value, bit):
+	return value & 2**bit != 0
+
+def find_complement(num):
+        bits = '{0:b}'.format(num)
+        complement_bits = ''.join('1' if bit == '0' else '0' for bit in bits)
+        return int(complement_bits, 2)

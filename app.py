@@ -4,10 +4,10 @@ import logging
 import dbus
 import dbus.mainloop.glib
 from bluetooth import *
-from ids import *
+from parser import *
 from service import *
 from delivery import *
-import idsqueue
+import ids
 
 try:
 	from gi.repository import GObject
@@ -15,7 +15,7 @@ except ImportError:
 	import gobject as GObject
 
 mainloop = None
-app = None
+#app = None
 idsService = None
 idsCharacteristic = None
 
@@ -502,7 +502,7 @@ class IDDStatusReaderControlPointChrc(Characteristic):
 
 	def WriteValue(self, value, options):
 		logger.info('IDDStatusReaderControlPointChrc write: ' + repr(value))
-		self.reply = parse_ids_status_reader_control_point(value, send_response)
+		self.reply = parse_ids_status_reader_control_point(value)
 		#self.reply = parse_ids_status_reader_control_point(value)
 		#self.notify_status_reader_control_point()
 
@@ -547,7 +547,7 @@ class IDDCommandControlPointChrc(Characteristic):
 
 	def WriteValue(self, value, options):
 		logger.info('IDDCommandControlPointChrc write: ' + repr(value))
-		self.reply = parse_ids_command_control_point(value, send_response)
+		self.reply = parse_ids_command_control_point(value)
 		
 		'''
 		for service in app.services:
@@ -589,7 +589,7 @@ class IDDCommandDataChrc(Characteristic):
 		if not self.notifying:
 			return
 		
-		for service in app.services:
+		for service in ids.app.services:
 			if service.uuid == '1829':
 				for characteristic in service.characteristics:
 					if characteristic.uuid == '2b00':
@@ -711,14 +711,14 @@ def cleanup():
 	ad_manager.UnregisterAdvertisement(device_advertisement.get_path())
 
 	logger.info('Unregistering application')
-	service_manager.UnregisterApplication(app.get_path())
+	service_manager.UnregisterApplication(ids.app.get_path())
 	
 	cancel_all_delivery()
 	mainloop.quit()
 
 def send_response(target, data):
 	logger.info('send_response')
-	for service in app.services:
+	for service in ids.app.services:
 			if service.uuid == '1829':
 				for characteristic in service.characteristics:
 					if characteristic.uuid == target:
@@ -733,12 +733,12 @@ def main():
 	global ad_manager
 	global device_advertisement
 	global service_manager
-	global app
+	#global app
 
 	# Register the signal handlers
 	#signal.signal(signal.SIGTERM, cleanup)
 	#signal.signal(signal.SIGINT, cleanup)
-	idsqueue.init()
+	ids.init()
 
 	logger.info('IDS Sensor')
 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -751,7 +751,7 @@ def main():
 
 	device_advertisement = DeviceAdvertisement(bus, 0)
 
-	app = Application(bus)
+	ids.app = Application(bus)
 
 	mainloop = GObject.MainLoop()
 
@@ -761,11 +761,11 @@ def main():
 									 error_handler=register_ad_error_cb)
 
 	logger.info('Registering application')
-	service_manager.RegisterApplication(app.get_path(), {},
+	service_manager.RegisterApplication(ids.app.get_path(), {},
 										reply_handler=register_app_cb,
 										error_handler=register_app_error_cb)
 
-	ids_init()
+	parser_init()
 	mainloop.run()
 
 

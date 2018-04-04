@@ -1,5 +1,7 @@
 import logging
 from db import *
+from response import *
+from statusChanged import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,6 +89,7 @@ def add_history_event(event_type, event_data):
 	logger.info(event_data_str)
 	add_entry(Event(event = event_type, sequence = counter, data = event_data_str))
 	counter += 1
+	update_status_changed(0x80)
 
 #ef get_history_event():
 	#get entry from event tablr

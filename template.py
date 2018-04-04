@@ -429,8 +429,6 @@ def activate_template(template_number):
 	
 	result = update_arbitrary_row(TemplateLookup, 'template_number', str(template_number), 'active', 1)				
 	history_data = [template_type, previously_activated_template, template_number]
-
-	#page 164
 	add_history_event(EventType.profile_template_activated, history_data)
 	return True
 
@@ -438,28 +436,6 @@ def get_template(template_number):
 	logger.info('get_template')
 	template = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
 	return template
-
-'''
-def get_template_details(template_number):
-	logger.info('get_template_details')
-	logger.info(template_number)
-	row = get_row_for_object(TemplateLookup, TemplateLookup.template_number, template_number)
-	logger.info(row)
-	if row is not None:
-		table = get_table_by_template_type(row.template_type)
-		if table is None:
-			logger.info('ERROR: table not found!')
-			return None
-		else:
-			template = get_row_for_object(table, table.template_number, row.template_number)
-		
-		if template is not None:
-			return template
-		else:
-			return None
-	else:
-		return None
-'''
 
 def get_template_details(template_number):
 	logger.info('get_template_details')

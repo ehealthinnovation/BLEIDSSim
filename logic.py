@@ -10,6 +10,7 @@ from delivery import *
 from datatypes import *
 from statusChanged import *
 from template import *
+from response import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,16 +26,6 @@ def logic_init():
 	logger.info('logic init')
 
 '''
-IDS Status Reader Control Point
-'''
-#KT
-#def get_active_bolus_ids():
-#	logger.info('get_active_bolus_ids')
-	#global active_bolus_ids
-	#logger.info(active_bolus_ids)
-	#return 0
-
-'''
 IDS Command Control Point
 '''
 def set_therapy_control_state(state):
@@ -42,13 +33,14 @@ def set_therapy_control_state(state):
 	logger.info('set_therapy_control_state')	
 	status = get_current_status()
 	previous_therapy_control_state = status.therapy_control_state
-	status.therapy_control_state = state
-	result = write_status(status)
-	if result == True:
-		#page 166
-		history_data = [previous_therapy_control_state, int(state)]
-		add_history_event(EventType.therapy_control_state_changed, history_data)
-	return result
+	#status.therapy_control_state = state
+	#result = write_status(status)
+	update_status_changed(1)
+	update_status('therapy_control_state', state)
+	
+	history_data = [previous_therapy_control_state, int(state)]
+	add_history_event(EventType.therapy_control_state_changed, history_data)
+	return True
 	
 def set_flight_mode(enabled):
 	logger.info('set_flight_mode')
@@ -96,14 +88,14 @@ def activate_templates(templates):
 def bolus_delivery_complete():
 	logger.info('bolus_delivery_complete')
 
-def set_bolus(bolus_type ,fast_amount, extended_amount, duration, delay_time, template_number, activation_type, callback):
+def set_bolus(bolus_type ,fast_amount, extended_amount, duration, delay_time, template_number, activation_type):
 	logger.info('set_bolus')
 	bolus_id = get_next_available_bolus_id()
 	store_bolus(bolus_id, bolus_type, fast_amount, extended_amount, duration, delay_time, template_number, activation_type, 1)
 	if bolus_type is BolusType.fast:
 		deliver_single_shot_bolus(fast_amount)
 	if bolus_type is BolusType.extended:
-		deliver_extended_bolus(bolus_id, extended_amount, duration, bolus_delivery_complete)
+		deliver_extended_bolus(bolus_id, extended_amount, duration)
 
 	return bolus_id
 
@@ -146,7 +138,6 @@ def set_max_bolus(amount):
 	global max_bolus
 	old_max_bolus_amount = max_bolus
 	max_bolus = amount
-	#page 175
 	history_data = [old_max_bolus_amount, max_bolus]
 	add_history_event(EventType.max_bolus_amount_changed, history_data)
 

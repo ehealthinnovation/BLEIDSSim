@@ -1,5 +1,7 @@
 import logging
 from db import *
+from response import *
+from shortfloat import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,6 +19,9 @@ class Status(Base):
 		return "<Status(therapy_control_state,='%s', operational_state='%s', reservoir_remaining_amount='%s', reservoir_attached='%s')>" % (
 			self.therapy_control_state, self.operational_state, self.reservoir_remaining_amount, self.reservoir_attached)
 
+def status_init():
+	logger.info('status_init')	
+
 def write_status(status):
 	logger.info('write_status')
 	result = add_entry(status)
@@ -27,3 +32,51 @@ def get_current_status():
 	logger.info('get_current_status')
 	status =  get_last_row(Status)
 	return status
+
+def update_status(status_field, value):
+	logger.info('update_status')
+	current_status = get_current_status()
+	setattr(current_status, status_field, value)
+	write_status(current_status)
+
+	reservoir_remaining = float_to_shortfloat(current_status.reservoir_remaining_amount)
+	
+	data = []	
+	data.append(dbus.Byte(current_status.therapy_control_state))
+	data.append(dbus.Byte(current_status.operational_state))
+	data.append(dbus.Byte(reservoir_remaining & 0xff))
+	data.append(dbus.Byte(reservoir_remaining >> 8))
+	data.append(dbus.Byte(current_status.reservoir_attached))
+	packet = build_response_packet(None, data)
+	send_response(IDSServiceCharacteristics.status, packet)
+
+#---
+
+'''
+def update_status_field(field, value):
+	current_status = get_current_status()
+	update_arbitrary_row(Status, 'id', current_status.id, field, value)
+
+def get_ids_status():
+	logger.info('get ids status')
+	
+	status = get_current_status()
+	data = []
+	print(status)
+
+	if status is None:
+		logger.info('status not found')
+		return None
+	else:
+		logger.info('status found')
+		reservoir_remaining = float_to_shortfloat(status.reservoir_remaining_amount)
+		
+		data.append(dbus.Byte(status.therapy_control_state))
+		data.append(dbus.Byte(status.operational_state))
+		data.append(dbus.Byte(reservoir_remaining & 0xff))
+		data.append(dbus.Byte(reservoir_remaining >> 8))
+		data.append(dbus.Byte(status.reservoir_attached))
+		packet = build_response_packet(None, data)
+		return packet
+'''
+
