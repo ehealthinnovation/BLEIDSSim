@@ -6,6 +6,7 @@ from bolus import *
 import ids
 from statusChanged import *
 from status import *
+import threading
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,6 +21,14 @@ total_delivered_bolus = 0
 total_delivered_basal = 0
 
 full_reservoir_amount = 180
+
+'''def do_something():
+	logger.info('DO SOMETHING!')
+	thread_id = threading.get_ident()
+	logger.info(thread_id)
+	update_status_changed(80)
+	update_status('reservoir_remaining_amount', (full_reservoir_amount - total_delivered_bolus - total_delivered_basal))
+'''
 
 def post_bolus_delivery():
 	logger.info('DONE')
@@ -39,7 +48,10 @@ def deliver_extended_bolus(bolus_id, amount, duration):
 
 	logger.info('deliver_extended_bolus')
 	rate = round(amount/duration, 2)
-	
+
+	thread_id = threading.get_ident()
+	logger.info(thread_id)
+
 	bolus_delivery_amount_remaining = amount
 	bolus_delivery_rate = rate
 	bolus_timer = perpetualTimer(bolus_delivery_interval, deliver_bolus, bolus_id, post_bolus_delivery)
@@ -48,6 +60,9 @@ def deliver_extended_bolus(bolus_id, amount, duration):
 
 def deliver_bolus(bolus_id):
 	logger.info('deliver_bolus')
+	thread_id = threading.get_ident()
+	logger.info(thread_id)
+
 	global bolus_delivery_amount_remaining
 	global bolus_delivery_rate
 	global total_delivered_bolus
@@ -58,12 +73,17 @@ def deliver_bolus(bolus_id):
 	
 	logger.info(round(bolus_delivery_amount_remaining,2))
 	logger.info(ids.q)
+	#ids.q.put(lambda: )
+	#event = ids.q.get()
+	#event()
+
 	#update_bolus_remaining_amount(bolus_id, bolus_delivery_amount_remaining)
 	total_delivered_bolus += bolus_delivery_rate
-	if bolus_delivery_amount_remaining <= 0:
-		logger.info('total_delivered_bolus')
-		logger.info(total_delivered_bolus)
+	logger.info('total_delivered_bolus')
+	logger.info(total_delivered_bolus)
+	if bolus_delivery_amount_remaining <= 0:	
 		update_status_changed(80)
+		update_status('reservoir_remaining_amount', (full_reservoir_amount - total_delivered_bolus - total_delivered_basal))
 		return False
 	else:
 		return True

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def db_init():
 	global session
 	logger.info('db_init')
-	engine = create_engine('sqlite:///ids.db')
+	engine = create_engine('sqlite:///ids.db', connect_args={'check_same_thread': False})
 	Session.configure(bind=engine)
 	Base.metadata.create_all(engine)
 	session = Session()

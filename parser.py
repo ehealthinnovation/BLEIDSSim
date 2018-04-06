@@ -2,6 +2,7 @@ import logging
 import dbus
 import collections
 import datetime
+import threading
 
 from logic import *
 from helper import *
@@ -38,6 +39,10 @@ def parser_init():
 	template_init()
 	time_zone = 0
 	dst = 0
+	
+	#thread_id = threading.get_ident()
+	#logger.info(thread_id)
+	#deliver_extended_bolus(1, 5.0, 30)
 
 def set_default_status():
 	logger.info('set_default_status')
