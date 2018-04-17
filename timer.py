@@ -17,7 +17,6 @@ class perpetualTimer():
 		self.thread = Timer(self.t, self.handle_function)
 		self.argument = argument
 		
-		
 	def handle_function(self):
 		logger.info('handle_function')
 		keep_going = self.hFunction(self.argument)

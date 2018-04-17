@@ -40,10 +40,6 @@ def parser_init():
 	time_zone = 0
 	dst = 0
 	
-	#thread_id = threading.get_ident()
-	#logger.info(thread_id)
-	#deliver_extended_bolus(1, 5.0, 30)
-
 def set_default_status():
 	logger.info('set_default_status')
 	reservoir_remaining = float_to_shortfloat(full_reservoir_amount)
@@ -1232,7 +1228,6 @@ def handle_set_bolus(value):
 	data.append(dbus.Byte(bolus_id & 0xff))
 	data.append(dbus.Byte(bolus_id >> 8))
 	packet = build_response_packet(CommandControlOpCodes.set_bolus_response, data)
-	
 	send_response(IDSServiceCharacteristics.command_control_point, packet)
 	
 
