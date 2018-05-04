@@ -7,6 +7,7 @@ import ids
 from statusChanged import *
 from status import *
 import threading
+from history import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +23,13 @@ total_delivered_basal = 0
 
 full_reservoir_amount = 180
 
+def update_reservoir_remaining_amount(remaining_amount):
+	logger.info('update_reservoir_remaining_amount' + str(remaining_amount))
+	update_status('reservoir_remaining_amount', remaining_amount)
+	reservoir_remaining_data = str(format(float_to_shortfloat(remaining_amount), 'x'))
+	history_data = reservoir_remaining_data
+	add_history_event(EventType.reservoir_remaining_amount_changed, history_data)
+
 def post_bolus_delivery():
 	logger.info('Delivery Complete')
 	
@@ -32,7 +40,8 @@ def deliver_single_shot_bolus(amount):
 	global total_delivered_bolus
 	total_delivered_bolus += amount
 	update_status_changed(80)
-	update_status('reservoir_remaining_amount', (full_reservoir_amount - total_delivered_bolus - total_delivered_basal))
+	update_reservoir_remaining_amount(full_reservoir_amount - total_delivered_bolus - total_delivered_basal)
+	#update_status('reservoir_remaining_amount', (full_reservoir_amount - total_delivered_bolus - total_delivered_basal))
 
 def deliver_extended_bolus(bolus_id, amount, duration):
 	global bolus_delivery_amount_remaining
@@ -65,7 +74,8 @@ def deliver_bolus(bolus_id):
 	bolus_delivery_amount_remaining -= bolus_delivery_rate
 	
 	update_status_changed(80)
-	update_status('reservoir_remaining_amount', round(full_reservoir_amount - total_delivered_bolus - total_delivered_basal, 1))
+	update_reservoir_remaining_amount(round(full_reservoir_amount - total_delivered_bolus - total_delivered_basal, 1))
+	#update_status('reservoir_remaining_amount', round(full_reservoir_amount - total_delivered_bolus - total_delivered_basal, 1))
 	
 	logger.info('Bolus Delivery Amount Remaining: %f', bolus_delivery_amount_remaining)
 	if bolus_delivery_amount_remaining == 0:

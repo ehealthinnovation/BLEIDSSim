@@ -716,6 +716,7 @@ def cleanup():
 	cancel_all_delivery()
 	mainloop.quit()
 
+'''
 def send_response(target, data):
 	logger.info('send_response')
 	for service in ids.app.services:
@@ -726,7 +727,7 @@ def send_response(target, data):
 						characteristic.PropertiesChanged(
 							GATT_CHRC_IFACE,
 							{'Value': data}, [])
-
+'''
 
 def main():
 	global mainloop

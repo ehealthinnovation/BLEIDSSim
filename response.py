@@ -16,9 +16,15 @@ def build_response_packet(opcode, data):
 	logger.info('build_response_packet')
 	packet = []
 
+	logger.info("opcode: " + str(opcode))
+	logger.info("opcode length: " + str(len(str(opcode))))
+
 	if opcode is not None:
-		packet.append(dbus.Byte(opcode & 0xff))
-		packet.append(dbus.Byte(opcode >> 8))
+		if len(str(opcode)) == 1:
+			packet.append(dbus.Byte(opcode))
+		else:
+			packet.append(dbus.Byte(opcode & 0xff))
+			packet.append(dbus.Byte(opcode >> 8))
 	
 	logger.info('data: ' + repr(data))
 	for byte in data:

@@ -21,6 +21,7 @@ def db_init():
 
 def add_entry(Object):
 	logger.info('db:add_entry')
+	logger.info(Object)
 	session.add(Object)
 	try:
 		session.commit()
@@ -52,6 +53,10 @@ def get_last_row(Object):
 	logger.info('get_last_row')
 	row = session.query(Object).order_by(desc('id')).first()
 	return row
+
+def get_all_rows(Object):
+	rows = session.query(Object).all()
+	return rows
 
 def get_rows_with_range(Object, field, start, end):
 	rows = session.query(Object).filter(field>=start, field<=end).all()

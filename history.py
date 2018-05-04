@@ -15,7 +15,7 @@ class Event(Base):
 	event = Column("Event", Integer)
 	sequence = Column("Sequence", Integer, unique=True)
 	#offset = Column("Offset", Integer)
-	data = Column("Data", String(128))
+	data = Column("Data", String(1024))
 
 	def __repr__(self):
 		return "<Event(event='%s', sequence='%s', data='%s')>" % (
@@ -79,19 +79,61 @@ def get_last_counter_value():
 		last_row = get_last_row(Event)
 		return last_row.sequence
 
+'''
 def add_history_event(event_type, event_data):
 	global counter
 	logger.info('add_history_event')
+	logger.info(event_type)
+	logger.info(event_data)
 	#event_data_str = ",".join(map(str, event_data))
 	#event_data_str = ','.join(str(x) for x in event_data)
 	#event_data_str = ",".join(str(x) for x in event_data)
-	event_data_str = ",".join(map(str, event_data))
+	event_data_str = ''.join(map(str, event_data))
 	logger.info(event_data_str)
 	add_entry(Event(event = event_type, sequence = counter, data = event_data_str))
 	counter += 1
 	update_status_changed(0x80)
+'''
 
-#ef get_history_event():
+def add_history_event(event_type, event_data):
+	global counter
+	logger.info('add_history_event')
+	logger.info(event_type)
+	logger.info(event_data)
+	add_entry(Event(event = event_type, sequence = counter, data = event_data))
+	counter += 1
+	update_status_changed(0x80)
+
+def get_history_count():
+	logger.info('get_history_count')
+	count = get_row_count(Event)
+	return count
+
+#page 88/151
+def report_all_history_events():
+	logger.info('report_all_history_events')
+	data = []
+	rows = get_all_rows(Event)
+	print(repr(rows))
+
+	for row in rows:
+		data.append(dbus.Byte(row.event & 0xff))
+		data.append(dbus.Byte(row.event >> 8))
+		data.append(dbus.Byte(row.sequence & 0xff))
+		data.append(dbus.Byte(row.sequence >> 8))
+		data.append(dbus.Byte(row.sequence >> 16))
+		data.append(dbus.Byte(row.sequence >> 24))
+		data.append(dbus.Byte(0x00)) #offset
+		data.append(dbus.Byte(0x00)) #offset
+		event_data = row.data
+		event_bytes = [event_data[i:i+2] for i in range(0,len(event_data), 2)]
+		for event_data_byte in event_bytes[::-1]:
+			data.append(dbus.Byte(int(event_data_byte, 16)))
+		packet = build_response_packet(None, data)
+		send_response(IDSServiceCharacteristics.history, packet)
+
+
+#def get_history_event():
 	#get entry from event tablr
 
 	#convert string to list

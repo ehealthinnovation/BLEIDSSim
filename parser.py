@@ -1,9 +1,33 @@
+'''
+IDS Simulator v1.0
+--
+History events not supported in this version:
+	reference_time_base_offset = 0x0033
+	bolus_calculated_1_of_2 = 0x003C
+	bolus_calculated_2_of_2	= 0x0055
+	bolus_programmed_1_of_2	= 0x005A
+	bolus_programmed_2_of_2 = 0x0066
+	bolus_delivered_1_of_2 = 0x0069
+	bolus_delivered_2_of_2 = 0x0096
+	delivered_basal_rate_changed = 0x0099
+	tbr_adjustment_started = 0x00A5
+	tbr_adjustment_ended = 0x00AA
+	tbr_adjustment_changed = 0x00C3
+	profile_template_activated = 0x00CC
+	total_daily_insulin_delivery = 0x00FF
+	operational_state_changed = 0x030C
+	annunciation_status_changed_1_of_2 = 0x033F
+	annunciation_status_changed_2_of_2 = 0x0356
+	bolus_template_changed_1_of_2 = 0x03C0
+	bolus_template_changed_2_of_2 = 0x03CF
+'''
+
 import logging
 import dbus
 import collections
-import datetime
 import threading
 
+from datetime import datetime
 from logic import *
 from helper import *
 from crc import *
@@ -40,6 +64,7 @@ def parser_init():
 	time_zone = 0
 	dst = 0
 	
+
 def set_default_status():
 	logger.info('set_default_status')
 	reservoir_remaining = float_to_shortfloat(full_reservoir_amount)
@@ -215,10 +240,12 @@ def handle_reset_status(value):
 	data = []
 	status_changed_reset()
 
+	logger.info("handle_reset_status - 2")
 	data.append(dbus.Byte(StatusReaderOpCodes.reset_status & 0xff))
 	data.append(dbus.Byte(StatusReaderOpCodes.reset_status >> 8))
 	data.append(dbus.Byte(ResponseCodes.success))
 	packet = build_response_packet(StatusReaderOpCodes.response_code, data)
+	logger.info("handle_reset_status - send response")
 	send_response(IDSServiceCharacteristics.status_reader_control_point, packet)
 
 
@@ -556,6 +583,9 @@ def handle_set_therapy_control_state(value):
 	state = value[2]
 	status = get_current_status()
 	
+	current_state = str(int(status.therapy_control_state))
+	new_state = str(int(state))
+
 	'''
 	If the therapy control state could not be set in the current application context (e.g., the Therapy Control State is set to Run although there is no inserted insulin reservoir), the Server shall indicate the IDD Command Control Point with a Response Code Op Code, a Request Op Code of Set Therapy Control State, and a Response Code Value in the Operand set to Procedure not applicable.
 	'''
@@ -585,6 +615,9 @@ def handle_set_therapy_control_state(value):
 
 	#return a response
 	if result == True:
+		history_data = current_state + new_state
+		add_history_event(EventType.therapy_control_state_changed, history_data)
+		
 		logger.info('therapy control state set successfully')
 		data.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state & 0xff))
 		data.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state >> 8))
@@ -828,7 +861,15 @@ def handle_write_basal_rate_profile_template(value):
 	logger.info(result)
 
 	if result == True:
-		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_rate]
+		template_number_str = str(int(template_number)).zfill(2)
+		first_time_block_number_index_str = str(int(first_time_block_number_index)).zfill(2)
+		first_duration_data = value[5:7]
+		first_rate_data = value[7:9]
+
+		print(repr(first_duration_data))
+		print(repr(first_rate_data))
+
+		history_data = template_number_str + first_time_block_number_index_str + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_rate_data)
 		add_history_event(EventType.basal_rate_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) #flags, transaction complete
@@ -1066,9 +1107,12 @@ def handle_set_tbr_template(value):
 	logger.info(result)
 
 	if result == True:
-		history_data = [int(template_number), int(tbr_type), tbr_adjustment_value, tbr_duration_value]
+		tbr_adjustment_value_bytes = value[4:6]
+		tbr_duration_value_bytes = value[6:8]
+		
+		history_data = str(int(template_number)) + str(int(tbr_type)) + ''.join(format(x, '02x') for x in tbr_adjustment_value_bytes) + ''.join(format(x, '02x') for x in tbr_duration_value_bytes)
 		add_history_event(EventType.tbr_template_changed, history_data)
-
+		
 		data.append(dbus.Byte(template_number))
 		packet = build_response_packet(CommandControlOpCodes.set_tbr_template_response, data)
 	else:
@@ -1443,8 +1487,8 @@ def handle_set_bolus_template(value):
 
 	logger.info(result)
 	if result == True:
-		history_data = [int(template_number), int(bolus_type), bolus_fast_amount, bolus_extended_amount, bolus_duration]
-		add_history_event(EventType.bolus_template_changed_1_of_2, history_data)
+		#history_data = [int(template_number), int(bolus_type), bolus_fast_amount, bolus_extended_amount, bolus_duration]
+		#add_history_event(EventType.bolus_template_changed_1_of_2, history_data)
 
 		data.append(dbus.Byte(template_number))
 		packet = build_response_packet(CommandControlOpCodes.set_bolus_template_response, data)
@@ -1687,17 +1731,19 @@ def handle_get_activated_profile_templates():
 
 def handle_start_priming(value):
 	print('handle_start_priming')
+	print(repr(value))
 	data = []
 	
-	priming_amount = shortfloat_bytes_to_float(value[2:4][::-1])
+	event_data = value[2:4][::-1]
+	priming_amount = shortfloat_bytes_to_float(event_data)
 	print('priming amount: ' + repr(priming_amount))
 
-	#TO-DO KT: check if amount is out of range
-	
 	start_priming(priming_amount)
 	
 	# pg.171
-	add_history_event(EventType.priming_started, repr(priming_amount))
+	history_data = ''.join(format(x, '02x') for x in event_data)
+	print(type(history_data))
+	add_history_event(EventType.priming_started, history_data)
 
 	data.append(dbus.Byte(CommandControlOpCodes.start_priming  & 0xff))
 	data.append(dbus.Byte(CommandControlOpCodes.start_priming >> 8))
@@ -1711,7 +1757,6 @@ def handle_stop_priming():
 	data = []
 
 	'''
-	TO-DO KT:
 	If the priming was not started before by executing the Start Priming procedure (see Section 3.7.2.19), or the priming was already finished (i.e., the provided amount of insulin to fill the fluidic path was delivered completely), the Server shall indicate the IDD Command Control Point with a Response Code Op Code, a Request Op Code of
 	Stop Priming, and a Response Code Value in the Operand set to Procedure not applicable.
 	'''
@@ -1722,6 +1767,11 @@ def handle_stop_priming():
 		data.append(dbus.Byte(ResponseCodes.procedure_not_applicable))
 		packet = build_response_packet(CommandControlOpCodes.response_code, data)
 	else:
+		# pg.172
+		#no flags set, 5.7, programmed amount reached
+		history_data = '00F0393C'
+		add_history_event(EventType.priming_done, history_data)
+
 		data.append(dbus.Byte(CommandControlOpCodes.stop_priming  & 0xff))
 		data.append(dbus.Byte(CommandControlOpCodes.stop_priming >> 8))
 		data.append(dbus.Byte(ResponseCodes.success))
@@ -1876,7 +1926,9 @@ def handle_write_isf_profile_template(value):
 	logger.info(result)
 
 	if result == True:
-		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_isf]
+		first_duration_data = value[5:7]
+		first_isf_data = value[7:9]
+		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_isf_data) 
 		add_history_event(EventType.isf_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) # flags
@@ -2012,7 +2064,9 @@ def handle_write_i2cho_ratio_profile_template(value):
 	logger.info(result)
 
 	if result == True:
-		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_ratio]
+		first_duration_data = value[5:7]
+		first_ratio_data = value[7:9]
+		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_ratio_data)
 		add_history_event(EventType.i2cho_ratio_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
@@ -2127,7 +2181,10 @@ def handle_write_target_glucose_range_profile_template(value):
 	logger.info(result)
 
 	if result == True:
-		history_data = [int(template_number), int(first_time_block_number_index), first_duration, first_lower_target_glucose_limit, first_upper_target_glucose_limit]
+		first_duration_data = value[5:7]
+		first_lower_target_glucose_limit_data = value[7:9]
+		first_upper_target_glucose_limit_data = value[9:11]
+		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_lower_target_glucose_limit_data) + ''.join(format(x, '02x') for x in first_upper_target_glucose_limit_data) 
 		add_history_event(EventType.target_glucose_range_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
@@ -2162,13 +2219,21 @@ def handle_set_max_bolus_amount(value):
 	print('handle_set_max_bolus_amount')
 	data = []
 	
-	max_bolus_amount = shortfloat_bytes_to_float(value[2:4][::-1])
-	logger.info(max_bolus_amount)
+	max_bolus_data = value[2:4]
 	
-	#TO-DO: check if out of range
+	#get previous max bolus as short float string, leading zeros added if necessary
+	previous_max_bolus_amount = str(float_to_shortfloat(get_max_bolus())).zfill(4)
+	
+	#reverse string 2 bytes at a time (LSO, MSO)
+	previous_max_bolus_amount = "".join(reversed([previous_max_bolus_amount[i:i+2] for i in range(0, len(previous_max_bolus_amount), 2)]))
+	
+	#create history data object comprised of previous max bolus amount string, and new max bolus value
+	history_data = previous_max_bolus_amount + ''.join(format(x, '02x') for x in max_bolus_data)
+	add_history_event(EventType.max_bolus_amount_changed, history_data)
 
+	max_bolus_amount = shortfloat_bytes_to_float(value[2:4][::-1])
 	set_max_bolus(max_bolus_amount)
-	
+
 	data.append(dbus.Byte(CommandControlOpCodes.set_max_bolus_amount & 0xff))
 	data.append(dbus.Byte(CommandControlOpCodes.set_max_bolus_amount >> 8))
 	data.append(dbus.Byte(ResponseCodes.success))
@@ -2178,39 +2243,57 @@ def handle_set_max_bolus_amount(value):
 
 def parse_racp(value):
 	print('parse_racp')
-	response = []
 
 	if crc_is_valid(value) == False or crc_counter_is_valid() == False: 
 		return None
 
 	opcode = value[0]
-	#print('op code: ' + repr(opcode))
+	print('op code: ' + repr(opcode))
 
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_number_of_stored_records):
-		response = handle_report_number_of_stored_records(value)
-		return response
+		handle_report_number_of_stored_records(value)
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_stored_records):
-		response = handle_report_stored_records(value)
-		return response
+		handle_report_stored_records(value)
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.delete_stored_records):
-		response = handle_delete_stored_records(value)
-		return response
-
+		handle_delete_stored_records(value)
 
 def handle_report_number_of_stored_records(value):
 	print('handle_report_number_of_stored_records')
-	response = []
-	return response
+	data = []
+	count = get_row_count(Event)
+	logger.info('history count: ' + str(count))
+	
+	data.append(dbus.Byte(RecordAccessControlPointOperators.null))
+	data.append(dbus.Byte(count & 0xff))
+	data.append(dbus.Byte(count >> 8))
+	data.append(dbus.Byte(count >> 16))
+	data.append(dbus.Byte(count >> 24))
+	packet = build_response_packet(RecordAccessControlPointOpCodes.number_of_stored_records_response, data)
+	send_response(IDSServiceCharacteristics.racp, packet)
 
 def handle_report_stored_records(value):
 	print('handle_report_stored_records')
-	response = []
+	data = []
 	
 	operator = value[1]
 	print('operator: ' + repr(operator))
 
 	if str(int(operator)) == str(RecordAccessControlPointOperators.all_records):
 		print('all records')
+		count = get_history_count()
+		logger.info('history count: ' + str(count))
+		if count == 0:
+			#https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.record_access_control_point.xml
+
+			''' page 81/74
+			If the Server does not locate any records matching the Filter Type criteria of the request, the Server shall indicate the Record Access Control Point with a Response Code Op Code, Request Op Code of Report Stored Records, and a Response Code Value in the Operand set to No Records Found.
+			'''
+			data.append(dbus.Byte(RecordAccessControlPointOpCodes.report_stored_records)) #Request Op Code of Report Stored Records
+			data.append(dbus.Byte(0x06)) #Response Code Value in the Operand set to No Records Found
+			packet = build_response_packet(RecordAccessControlPointOpCodes.response_code, data) #Response Code Op Code
+			send_response(IDSServiceCharacteristics.racp, packet)
+		else:
+			report_all_history_events()
 	if str(int(operator)) == str(RecordAccessControlPointOperators.greater_than_or_equal_to):
 		print('greater_than_or_equal_to')
 	if str(int(operator)) == str(RecordAccessControlPointOperators.less_than_or_equal_to):
@@ -2221,8 +2304,6 @@ def handle_report_stored_records(value):
 		print('first_record')
 	if str(int(operator)) == str(RecordAccessControlPointOperators.last_record):
 		print('last_record')
-
-	return response
 
 def handle_delete_stored_records(value):
 	print('handle_delete_stored_records')
@@ -2243,36 +2324,23 @@ def handle_delete_stored_records(value):
 		print('first_record')
 	if str(int(operator)) == str(RecordAccessControlPointOperators.last_record):
 		print('last_record')
-
 	return response
 
-#pg 153/190
 def parse_current_time(value):
 	logger.info('parse_current_time')
+	global time_zone
+	global dst
+	date_data = value[0:7]
+	history_data = str(int(0x0F)) + ''.join(format(x, '02x') for x in date_data) + str(time_zone).zfill(2) + str(dst).zfill(2) 
+	add_history_event(EventType.reference_time, history_data)
 	
-	year_bytes = value[0:2]
-	year_bytes = year_bytes[::-1]
-	year = ''.join(map(lambda b: format(b, "02x"), year_bytes))
-	d = datetime.datetime(int(year,16), value[2], value[3], value[4], value[5], value[6])
-	print (d.year, d.month, d.day, d.hour, d.minute, d.second)
-	
-	ref_time = [0x0F, 		# reason
-				d.year,
-				d.month, 	# month
-				d.day, 		# day
-				d.hour, 	# hour
-				d.minute, 	# minute
-				d.second,	# second
-				int(time_zone),
-				int(dst)]
-
-	add_history_event(EventType.reference_time, ref_time)
-
-
 def parse_local_time_information(value):
 	global time_zone
 	global dst
 
 	logger.info('parse_local_time_information')
-	time_zone = value[0]
-	dst = value[1]
+	time_zone = format(value[0], '02x')
+	dst = format(value[1], '02x')
+	logger.info('time zone: ' + str(time_zone))
+	logger.info('dst: ' + str(dst))
+
