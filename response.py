@@ -20,7 +20,8 @@ def build_response_packet(opcode, data):
 	logger.info("opcode length: " + str(len(str(opcode))))
 
 	if opcode is not None:
-		if len(str(opcode)) == 1:
+		#if len(str(opcode)) == 1:
+		if len(str(opcode)) <= 2:
 			packet.append(dbus.Byte(opcode))
 		else:
 			packet.append(dbus.Byte(opcode & 0xff))

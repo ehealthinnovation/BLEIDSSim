@@ -33,12 +33,15 @@ def set_therapy_control_state(state):
 	logger.info('set_therapy_control_state')	
 	status = get_current_status()
 	previous_therapy_control_state = status.therapy_control_state
-	#status.therapy_control_state = state
-	#result = write_status(status)
+	
+	print(hex(previous_therapy_control_state)[2:])
+	print(hex(state)[2:])
+	history_data = str(hex(status.therapy_control_state)[2:]) + str(hex(state)[2:])
+
 	update_status_changed(1)
 	update_status('therapy_control_state', state)
 	
-	history_data = [previous_therapy_control_state, int(state)]
+	print(repr(history_data))
 	add_history_event(EventType.therapy_control_state_changed, history_data)
 	return True
 	
@@ -99,7 +102,6 @@ def set_bolus(bolus_type ,fast_amount, extended_amount, duration, delay_time, te
 
 	return bolus_id
 
-#KT
 def cancel_bolus(bolus_id):
 	logger.info('cancel_bolus')
 	for bolus in active_bolus_ids:
@@ -125,7 +127,6 @@ def stop_priming():
 		is_priming = 0
 		return True
 
-#TO-DO: check if out of range
 def set_initial_reservoir_fill_level(fill_level):
 	logger.info('set_initial_reservoir_fill_level')
 	return True
@@ -147,6 +148,3 @@ def get_max_bolus():
 	logger.info(max_bolus)
 	return max_bolus
 
-
-
-# delivery methods

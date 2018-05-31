@@ -583,9 +583,11 @@ def handle_set_therapy_control_state(value):
 	state = value[2]
 	status = get_current_status()
 	
-	current_state = str(int(status.therapy_control_state))
-	new_state = str(int(state))
-
+	current_state = hex(status.therapy_control_state)[2:]
+	new_state = hex(state)[2:]
+	print(repr(current_state))
+	print(repr(new_state))
+	
 	'''
 	If the therapy control state could not be set in the current application context (e.g., the Therapy Control State is set to Run although there is no inserted insulin reservoir), the Server shall indicate the IDD Command Control Point with a Response Code Op Code, a Request Op Code of Set Therapy Control State, and a Response Code Value in the Operand set to Procedure not applicable.
 	'''
@@ -615,9 +617,6 @@ def handle_set_therapy_control_state(value):
 
 	#return a response
 	if result == True:
-		history_data = current_state + new_state
-		add_history_event(EventType.therapy_control_state_changed, history_data)
-		
 		logger.info('therapy control state set successfully')
 		data.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state & 0xff))
 		data.append(dbus.Byte(CommandControlOpCodes.set_therapy_control_state >> 8))
@@ -1110,7 +1109,7 @@ def handle_set_tbr_template(value):
 		tbr_adjustment_value_bytes = value[4:6]
 		tbr_duration_value_bytes = value[6:8]
 		
-		history_data = str(int(template_number)) + str(int(tbr_type)) + ''.join(format(x, '02x') for x in tbr_adjustment_value_bytes) + ''.join(format(x, '02x') for x in tbr_duration_value_bytes)
+		history_data = str(hex(template_number)[2:]).zfill(2) + str(hex(tbr_type)[2:]) + ''.join(format(x, '02x') for x in tbr_adjustment_value_bytes) + ''.join(format(x, '02x') for x in tbr_duration_value_bytes)
 		add_history_event(EventType.tbr_template_changed, history_data)
 		
 		data.append(dbus.Byte(template_number))
@@ -1259,15 +1258,6 @@ def handle_set_bolus(value):
 		bolus_activation_type = 0
 
 	bolus_id = set_bolus(int(bolus_type) ,bolus_fast_amount, bolus_extended_amount, bolus_duration, bolus_delay_time, bolus_template_number, bolus_activation_type)
-
-	#status_changed = get_current_status_changed()
-	#status_changed.active_bolus_status_changed = 1
-	#write_status_changed(status_changed)
-	#status_changed = get_ids_status_changed()
-	#send_response(IDSServiceCharacteristics.status_changed, status_changed)
-	
-	#??
-	#update_status_changed(64)
 
 	data.append(dbus.Byte(bolus_id & 0xff))
 	data.append(dbus.Byte(bolus_id >> 8))
@@ -1438,7 +1428,7 @@ def handle_set_bolus_template(value):
 
 	# - The Bolus Template Number denotes a template that is not configurable (see
 	#   Section 3.7.2.17).
-	#TO-DO KT
+	#TO-DO
 
 	#
 	if (procedure_not_applicable == 1):
@@ -1487,9 +1477,6 @@ def handle_set_bolus_template(value):
 
 	logger.info(result)
 	if result == True:
-		#history_data = [int(template_number), int(bolus_type), bolus_fast_amount, bolus_extended_amount, bolus_duration]
-		#add_history_event(EventType.bolus_template_changed_1_of_2, history_data)
-
 		data.append(dbus.Byte(template_number))
 		packet = build_response_packet(CommandControlOpCodes.set_bolus_template_response, data)
 	else:
@@ -1696,7 +1683,6 @@ def handle_activate_profile_templates(value):
 			return
 		else:
 			activate_templates(templates)
-			#activate_template(int(value[template_number + 3]))
 
 	data.append(dbus.Byte(number_of_templates_to_activate))
 	for template_number in range(0, int(number_of_templates_to_activate)):
@@ -1769,7 +1755,7 @@ def handle_stop_priming():
 	else:
 		# pg.172
 		#no flags set, 5.7, programmed amount reached
-		history_data = '00F0393C'
+		history_data = '0039F03C'
 		add_history_event(EventType.priming_done, history_data)
 
 		data.append(dbus.Byte(CommandControlOpCodes.stop_priming  & 0xff))
@@ -1928,7 +1914,7 @@ def handle_write_isf_profile_template(value):
 	if result == True:
 		first_duration_data = value[5:7]
 		first_isf_data = value[7:9]
-		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_isf_data) 
+		history_data = str(hex(template_number)[2:]).zfill(2) + str(hex(first_time_block_number_index)[2:]).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_isf_data) 
 		add_history_event(EventType.isf_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) # flags
@@ -2066,7 +2052,7 @@ def handle_write_i2cho_ratio_profile_template(value):
 	if result == True:
 		first_duration_data = value[5:7]
 		first_ratio_data = value[7:9]
-		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_ratio_data)
+		history_data = str(hex(template_number)[2:]).zfill(2) + str(hex(first_time_block_number_index)[2:]).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_ratio_data)
 		add_history_event(EventType.i2cho_ratio_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
@@ -2184,7 +2170,7 @@ def handle_write_target_glucose_range_profile_template(value):
 		first_duration_data = value[5:7]
 		first_lower_target_glucose_limit_data = value[7:9]
 		first_upper_target_glucose_limit_data = value[9:11]
-		history_data = str(int(template_number)).zfill(2) + str(int(first_time_block_number_index)).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_lower_target_glucose_limit_data) + ''.join(format(x, '02x') for x in first_upper_target_glucose_limit_data) 
+		history_data = str(hex(template_number)[2:]).zfill(2) + str(hex(first_time_block_number_index)[2:]).zfill(2) + ''.join(format(x, '02x') for x in first_duration_data) + ''.join(format(x, '02x') for x in first_lower_target_glucose_limit_data) + ''.join(format(x, '02x') for x in first_upper_target_glucose_limit_data) 
 		add_history_event(EventType.target_glucose_range_profile_template_time_block_changed, history_data)
 
 		data.append(dbus.Byte(0x01)) #flags [end transaction]
@@ -2332,6 +2318,7 @@ def parse_current_time(value):
 	global dst
 	date_data = value[0:7]
 	history_data = str(int(0x0F)) + ''.join(format(x, '02x') for x in date_data) + str(time_zone).zfill(2) + str(dst).zfill(2) 
+	print(type(history_data))
 	add_history_event(EventType.reference_time, history_data)
 	
 def parse_local_time_information(value):

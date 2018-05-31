@@ -2,6 +2,7 @@ import logging
 from db import *
 from response import *
 from statusChanged import *
+from datatypes import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ def report_all_history_events():
 	print(repr(rows))
 
 	for row in rows:
+		data = []
 		data.append(dbus.Byte(row.event & 0xff))
 		data.append(dbus.Byte(row.event >> 8))
 		data.append(dbus.Byte(row.sequence & 0xff))
@@ -131,6 +133,12 @@ def report_all_history_events():
 			data.append(dbus.Byte(int(event_data_byte, 16)))
 		packet = build_response_packet(None, data)
 		send_response(IDSServiceCharacteristics.history, packet)
+
+	data = []
+	data.append(dbus.Byte(RecordAccessControlPointOpCodes.report_stored_records))
+	data.append(dbus.Byte(RecordAccessControlPointResponseCodes.success))
+	packet = build_response_packet(RecordAccessControlPointOpCodes.response_code, data)
+	send_response(IDSServiceCharacteristics.racp, packet)
 
 
 #def get_history_event():
