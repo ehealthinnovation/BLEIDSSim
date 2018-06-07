@@ -147,7 +147,6 @@ class TargetGlucoseTemplate(Base):
 def template_init():
 	logger.info('template_init')
 	if (get_setting('features', 'FEATURES', 'ids_features_basal_rate_supported') == '1'):
-		#for x in range(TemplateRange.basal_rate_profile_template_range[0], TemplateRange.basal_rate_profile_template_range[-1]):
 		for x in range(TemplateRange.basal_rate_profile_template_range[0], (TemplateRange.basal_rate_profile_template_range[0] + len(TemplateRange.basal_rate_profile_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x33,
@@ -156,7 +155,6 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_tbr_template_supported') == '1'):
-		#for x in range(TemplateRange.tbr_template_range[0], TemplateRange.tbr_template_range[-1]):
 		for x in range(TemplateRange.tbr_template_range[0], (TemplateRange.tbr_template_range[0] + len(TemplateRange.tbr_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x3C,
@@ -165,7 +163,6 @@ def template_init():
 											  configured = 0))
 	
 	if (get_setting('features', 'FEATURES', 'ids_features_bolus_template_supported') == '1'):
-		#for x in range(TemplateRange.bolus_template_range[0], TemplateRange.bolus_template_range[-1]):
 		for x in range(TemplateRange.bolus_template_range[0], (TemplateRange.bolus_template_range[0] + len(TemplateRange.bolus_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x55,
@@ -174,7 +171,6 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_isf_profile_template_supported') == '1'):
-		#for x in range(TemplateRange.isf_template_range[0], TemplateRange.isf_template_range[-1]):
 		for x in range(TemplateRange.isf_template_range[0], (TemplateRange.isf_template_range[0] + len(TemplateRange.isf_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x5A,
@@ -183,7 +179,6 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_i2cho_ratio_profile_template_supported') == '1'):
-		#for x in range(TemplateRange.i2cho_template_range[0], TemplateRange.i2cho_template_range[-1]):
 		for x in range(TemplateRange.i2cho_template_range[0], (TemplateRange.i2cho_template_range[0] + len(TemplateRange.i2cho_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x66,
@@ -192,7 +187,6 @@ def template_init():
 											  configured = 0))
 
 	if (get_setting('features', 'FEATURES', 'ids_features_target_glucose_range_profile_template_supported') == '1'):
-		#for x in range(TemplateRange.target_glucose_range_template_range[0], TemplateRange.target_glucose_range_template_range[-1]):
 		for x in range(TemplateRange.target_glucose_range_template_range[0], (TemplateRange.target_glucose_range_template_range[0] + len(TemplateRange.target_glucose_range_template_range))):
 			result = add_entry(TemplateLookup(template_number = x,
 											  template_type = 0x96,
@@ -210,7 +204,7 @@ def write_basal_rate_profile_template(flags, template_number, first_time_block_n
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(BasalRateProfileTemplate, BasalRateProfileTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(BasalRateProfileTemplate, BasalRateProfileTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(BasalRateProfileTemplate, BasalRateProfileTemplate.template_number, template_number)
 
@@ -244,7 +238,7 @@ def write_tbr_template(template_number, tbr_type, tbr_adjustment_value, tbr_dura
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(TBRTemplate, TBRTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(TBRTemplate, TBRTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(TBRTemplate, TBRTemplate.template_number, template_number)
 
@@ -273,7 +267,7 @@ def write_bolus_template(template_number, flags, bolus_type, bolus_fast_amount, 
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(BolusTemplate, BolusTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(BolusTemplate, BolusTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(BolusTemplate, BolusTemplate.template_number, template_number)
 
@@ -307,7 +301,7 @@ def write_isf_template(flags, template_number, first_time_block_number_index, fi
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(ISFTemplate, ISFTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(ISFTemplate, ISFTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(ISFTemplate, ISFTemplate.template_number, template_number)
 
@@ -341,7 +335,7 @@ def write_i2cho_template(flags, template_number, first_time_block_number_index, 
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(I2CHOTemplate, I2CHOTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(I2CHOTemplate, I2CHOTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(I2CHOTemplate, I2CHOTemplate.template_number, template_number)
 
@@ -375,7 +369,7 @@ def write_target_glucose_template(flags, template_number, first_time_block_numbe
 		logger.info('template not configurable')
 		return False
 
-	profile_exists = get_last_row_for_object(TargetGlucoseTemplate, TargetGlucoseTemplate.template_number, template_number)
+	profile_exists = get_last_row_for_object_with_value(TargetGlucoseTemplate, TargetGlucoseTemplate.template_number, template_number)
 	if profile_exists is not None:
 		delete_row(TargetGlucoseTemplate, TargetGlucoseTemplate.template_number, template_number)
 
@@ -482,23 +476,6 @@ def get_table_by_template_type(template_type):
 		return I2CHOTemplate
 	if template_type is TemplateTypeValues.target_glucose_range_profile_template:
 		return TargetGlucoseTemplate
-
-'''
-def get_template_type(template_number):
-	logger.info('get_template_type')
-	if template_number in TemplateRange.basal_rate_profile_template_range:
-		return TemplateType.basal_rate_profile_template_type
-	if template_number in TemplateRange.tbr_template_range:
-		return TemplateType.tbr_template_type
-	if template_number in TemplateRange.bolus_template_range:
-		return TemplateType.bolus_template_type
-	if template_number in TemplateRange.isf_template_range:
-		return TemplateType.isf_profile_template_type
-	if template_number in TemplateRange.i2cho_template_range:
-		return TemplateType.i2cho_template_type
-	if template_number in TemplateRange.target_glucose_range_template_range:
-		return TemplateType.target_glucose_template_type
-'''
 
 def get_template_type_for_range(range):
 	if range is TemplateRange.basal_rate_profile_template_range:

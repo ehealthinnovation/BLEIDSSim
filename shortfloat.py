@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import math
 
@@ -25,29 +24,23 @@ def shortfloat_bytes_to_float(value):
 
 
 def shortfloat_to_float(short_float_number):
-	#number = int(short_float_number, 16)
 	number = short_float_number
 	
 	#remove the mantissa portion of the number using bit shifting
 	exponent = number >> 12
-	
 	if exponent >= 8:
 		# exponent is signed and should be negative 8 = -8, 9 = -7, ... 15 = -1. Range is 7 to -8
 		exponent = -((0x000F + 1) - exponent)
 
 	# remove exponent portion of the number using bit mask
 	mantissa = number & 4095
-
 	if mantissa >= 2048:
 		# mantissa is signed and should be negative 2048 = -2048, 2049 = -2047, ... 4095 = -1. Range is 2047 to -2048
 		mantissa = -((0x0FFF + 1) - mantissa)
 
 	float_mantissa = float(mantissa)
-
 	result = float_mantissa * float(pow(10, float(exponent)/1))
-
 	return round(result,1)
-	#return float_mantissa * float(pow(10, float(exponent)/1))
 
 
 def float_to_shortfloat(number):

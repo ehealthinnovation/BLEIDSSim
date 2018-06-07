@@ -26,6 +26,7 @@ import logging
 import dbus
 import collections
 import threading
+import time
 
 from datetime import datetime
 from logic import *
@@ -43,6 +44,7 @@ from service import *
 from datatypes import *
 from basal import *
 from response import *
+from timeHelper import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,13 +59,13 @@ def parser_init():
 	db_init()
 	history_init()
 	annunciation_init()
-	check_if_date_time_set()
 	set_default_status()
 	status_changed_init()
 	template_init()
+	create_reference_date_time_event()
 	time_zone = 0
 	dst = 0
-	
+
 
 def set_default_status():
 	logger.info('set_default_status')
@@ -73,12 +75,11 @@ def set_default_status():
 						reservoir_remaining_amount = reservoir_remaining,
 						reservoir_attached = 1))
 
-#TO-DO: check if an unconfirmed date-time issue already exists
-def check_if_date_time_set():
-	date_time = get_latest_reference_time()
-	if date_time is None:
-		print("date time not set!")
-		write_annunciation(AnnunciationTypeValues.date_time_issue, AnnunciationStatusValues.pending)
+def create_reference_date_time_event():
+	logger.info('create_reference_date_time_event')
+
+	history_data = '0f' + current_time_to_hex()
+	add_history_event(EventType.reference_time, history_data)
 
 def crc_counter_is_valid():
 	return True
@@ -101,7 +102,6 @@ def crc_is_valid(value):
 		return False
 
 	return False
-
 
 def get_ids_status():
 	logger.info('get ids status')
@@ -2317,7 +2317,7 @@ def parse_current_time(value):
 	global time_zone
 	global dst
 	date_data = value[0:7]
-	history_data = str(int(0x0F)) + ''.join(format(x, '02x') for x in date_data) + str(time_zone).zfill(2) + str(dst).zfill(2) 
+	history_data = '0f' + ''.join(format(x, '02x') for x in date_data) + str(time_zone).zfill(2) + str(dst).zfill(2)
 	print(type(history_data))
 	add_history_event(EventType.reference_time, history_data)
 	

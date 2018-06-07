@@ -18,8 +18,6 @@ def get_setting(path, section, setting):
 	parser = ConfigParser()
 	parser = get_config(path)
 	value = parser.get(section, setting)
-	#print ("{section} {setting} is {value}").format(
-	#	section=section, setting=setting, value=value)
 	return value
 
 def update_setting(path, section, setting, value):

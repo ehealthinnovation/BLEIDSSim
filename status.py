@@ -49,34 +49,3 @@ def update_status(status_field, value):
 	data.append(dbus.Byte(current_status.reservoir_attached))
 	packet = build_response_packet(None, data)
 	send_response(IDSServiceCharacteristics.status, packet)
-
-#---
-
-'''
-def update_status_field(field, value):
-	current_status = get_current_status()
-	update_arbitrary_row(Status, 'id', current_status.id, field, value)
-
-def get_ids_status():
-	logger.info('get ids status')
-	
-	status = get_current_status()
-	data = []
-	print(status)
-
-	if status is None:
-		logger.info('status not found')
-		return None
-	else:
-		logger.info('status found')
-		reservoir_remaining = float_to_shortfloat(status.reservoir_remaining_amount)
-		
-		data.append(dbus.Byte(status.therapy_control_state))
-		data.append(dbus.Byte(status.operational_state))
-		data.append(dbus.Byte(reservoir_remaining & 0xff))
-		data.append(dbus.Byte(reservoir_remaining >> 8))
-		data.append(dbus.Byte(status.reservoir_attached))
-		packet = build_response_packet(None, data)
-		return packet
-'''
-

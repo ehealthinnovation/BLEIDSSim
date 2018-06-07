@@ -84,8 +84,8 @@ def get_first_row_for_object(Object, field, value):
 	logger.info('row: ' + row)
 	return row
 
-def get_last_row_for_object(Object, field, value):
-	logger.info('get_last_row_for_object')
+def get_last_row_for_object_with_value(Object, field, value):
+	logger.info('get_last_row_for_object_with_value')
 	row = session.query(Object).filter(field == value).order_by(desc('id')).first()
 	return row
 
@@ -111,13 +111,3 @@ def delete_row(Object, field, value):
 		result = session.query(Object).filter(field == value).delete()
 		session.commit()
 		return result
-
-'''
-def get_table_by_name(table_fullname):
-	for c in Base._decl_class_registry.values():
-		logger.info(c)
-		if hasattr(c, '__table__') and c.__table__.fullname == table_fullname:
-			logger.info('found table: ' + c)
-			return c
-'''
-

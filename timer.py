@@ -1,4 +1,3 @@
-#https://stackoverflow.com/questions/12435211/python-threading-timer-repeat-function-every-n-seconds
 
 import logging
 from threading import Timer, Thread, Event

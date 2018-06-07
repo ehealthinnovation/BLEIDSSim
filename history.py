@@ -3,6 +3,8 @@ from db import *
 from response import *
 from statusChanged import *
 from datatypes import *
+from timeHelper import *
+from datetime import timedelta
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ class Event(Base):
 	id = Column(Integer, primary_key=True)
 	event = Column("Event", Integer)
 	sequence = Column("Sequence", Integer, unique=True)
-	#offset = Column("Offset", Integer)
+	relative_offset = Column("Offset", Integer)
 	data = Column("Data", String(1024))
 
 	def __repr__(self):
@@ -58,16 +60,13 @@ class EventType(object):
 def history_init():
 	global counter
 	logger.info('history_init')
-	get_latest_reference_time()
 	last_counter_value = get_last_counter_value()
 	if last_counter_value is not None:
 		counter = last_counter_value + 1
-	# otherwise, counter remains at zero
-	#print(repr(counter))
 
 def get_latest_reference_time():
 	logger.info('get_latest_reference_time')
-	last_ref_event = get_last_row_for_object(Event, Event.event, EventType.reference_time)
+	last_ref_event = get_last_row_for_object_with_value(Event, Event.event, EventType.reference_time)
 	print(repr(last_ref_event))
 	return last_ref_event
 
@@ -80,28 +79,13 @@ def get_last_counter_value():
 		last_row = get_last_row(Event)
 		return last_row.sequence
 
-'''
 def add_history_event(event_type, event_data):
 	global counter
 	logger.info('add_history_event')
 	logger.info(event_type)
 	logger.info(event_data)
-	#event_data_str = ",".join(map(str, event_data))
-	#event_data_str = ','.join(str(x) for x in event_data)
-	#event_data_str = ",".join(str(x) for x in event_data)
-	event_data_str = ''.join(map(str, event_data))
-	logger.info(event_data_str)
-	add_entry(Event(event = event_type, sequence = counter, data = event_data_str))
-	counter += 1
-	update_status_changed(0x80)
-'''
-
-def add_history_event(event_type, event_data):
-	global counter
-	logger.info('add_history_event')
-	logger.info(event_type)
-	logger.info(event_data)
-	add_entry(Event(event = event_type, sequence = counter, data = event_data))
+	offset = get_latest_time_offset()
+	add_entry(Event(event = event_type, relative_offset = offset, sequence = counter, data = event_data))
 	counter += 1
 	update_status_changed(0x80)
 
@@ -110,7 +94,6 @@ def get_history_count():
 	count = get_row_count(Event)
 	return count
 
-#page 88/151
 def report_all_history_events():
 	logger.info('report_all_history_events')
 	data = []
@@ -125,8 +108,8 @@ def report_all_history_events():
 		data.append(dbus.Byte(row.sequence >> 8))
 		data.append(dbus.Byte(row.sequence >> 16))
 		data.append(dbus.Byte(row.sequence >> 24))
-		data.append(dbus.Byte(0x00)) #offset
-		data.append(dbus.Byte(0x00)) #offset
+		data.append(dbus.Byte(row.relative_offset & 0xff))
+		data.append(dbus.Byte(row.relative_offset >> 8))
 		event_data = row.data
 		event_bytes = [event_data[i:i+2] for i in range(0,len(event_data), 2)]
 		for event_data_byte in event_bytes[::-1]:
@@ -140,10 +123,17 @@ def report_all_history_events():
 	packet = build_response_packet(RecordAccessControlPointOpCodes.response_code, data)
 	send_response(IDSServiceCharacteristics.racp, packet)
 
+def get_latest_time_offset():
+	latest_time_reference = get_latest_reference_time()
+	if latest_time_reference is None:
+		return 0
 
-#def get_history_event():
-	#get entry from event tablr
-
-	#convert string to list
-	#data = event.data.split(",")
-
+	latest_time_data = latest_time_reference.data[2:]
+	latest_time_date = date_hex_to_datetime(latest_time_data)
+	print(latest_time_date)
+	now = datetime.now()
+	print(now)
+	time_difference = now - latest_time_date
+	time_difference_in_minutes = time_difference / timedelta(seconds=1)
+	print(int(time_difference_in_minutes))
+	return(int(time_difference_in_minutes))

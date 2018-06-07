@@ -81,11 +81,6 @@ def update_status_changed(status_changed_bits):
 	for x in range(0, 8):
 		if(bit(status_changed_byte, x)) is not bit(status_changed_bits, x):
 			status_changed_byte = set_bit(status_changed_byte, x)
-			#if bit(status_changed_bits, x) == 0:
-			#	status_changed_byte = clear_bit(status_changed_byte, x)
-			#else:
-			#	status_changed_byte = set_bit(status_changed_byte, x)
-
 			
 	data = [dbus.Byte(status_changed_byte & 0xff),
 			dbus.Byte(status_changed_byte >> 8)]

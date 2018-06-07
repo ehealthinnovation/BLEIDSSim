@@ -319,7 +319,6 @@ def find_adapter_advertisingmanager(bus):
     objects = remote_om.GetManagedObjects()
 
     for obj, props in objects.items():
-        #if LE_ADVERTISING_MANAGER_IFACE in props:
         if GATT_MANAGER_IFACE in props:
             return obj
 

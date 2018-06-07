@@ -75,7 +75,6 @@ def write_annunciation(annunciation_type, status):
 
 	return result
 
-# TO-DO: get last unconfirmed annunciation?
 def get_annunciation(annunciation_id):
 	logger.info('get_annunciation')
 	logger.info(annunciation_id)
@@ -86,7 +85,7 @@ def get_annunciation(annunciation_id):
 def get_latest_annunciation():
 	logger.info('get_latest_annunciation')
 	logger.info(counter)
-	annunciation =  get_last_row_for_object(Annunciation, Annunciation.annunciation_id, counter-1)
+	annunciation =  get_last_row_for_object_with_value(Annunciation, Annunciation.annunciation_id, counter-1)
 	logger.info(annunciation)
 	return annunciation
 
@@ -98,16 +97,3 @@ def set_annunciation_status(annunciation_id, status):
 	history_data = [0, annunciation.annunciation_id, annunciation.annunciation_type, annunciation.status]
 	add_history_event(EventType.annunciation_status_changed_1_of_2, history_data)
 	return True
-
-'''
-def snooze_annunciation(annunciation_id):
-	logger.info('snooze_annuncation')
-	result = update_arbitrary_row(Annunciation, 'annunciation_id', str(annunciation_id), 'snoozed', 1)
-	return result
-
-def confirm_annunciation(annunciation_id):
-	logger.info('confirm_annuncation')
-	result = update_arbitrary_row(Annunciation, 'annunciation_id', str(annunciation_id), 'confirmed', 1)
-	return result
-'''
-
