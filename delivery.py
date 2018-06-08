@@ -27,7 +27,7 @@ def update_reservoir_remaining_amount(remaining_amount):
 	logger.info('update_reservoir_remaining_amount' + str(remaining_amount))
 	update_status('reservoir_remaining_amount', remaining_amount)
 	reservoir_remaining_data = str(format(float_to_shortfloat(remaining_amount), 'x'))
-	history_data = reservoir_remaining_data
+	history_data = reservoir_remaining_data[2:4]+reservoir_remaining_data[0:2]
 	add_history_event(EventType.reservoir_remaining_amount_changed, history_data)
 
 def post_bolus_delivery():

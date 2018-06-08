@@ -117,6 +117,7 @@ def report_all_history_events():
 		packet = build_response_packet(None, data)
 		send_response(IDSServiceCharacteristics.history, packet)
 
+	print('records reported')
 	data = []
 	data.append(dbus.Byte(RecordAccessControlPointOpCodes.report_stored_records))
 	data.append(dbus.Byte(RecordAccessControlPointResponseCodes.success))
