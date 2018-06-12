@@ -45,6 +45,7 @@ from datatypes import *
 from basal import *
 from response import *
 from timeHelper import *
+from timer import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -52,7 +53,9 @@ logger = logging.getLogger(__name__)
 time_zone = 0
 dst = 0
 crc_counter = 0
-
+reference_time_interval = 1800 #30 minutes
+reference_time_timer = None
+cancel_timer = False
 
 def parser_init():
 	logger.info('parser_init')
@@ -65,7 +68,24 @@ def parser_init():
 	create_reference_date_time_event()
 	time_zone = 0
 	dst = 0
+	global reference_time_timer
+	reference_time_timer = perpetualTimer(reference_time_interval, write_reference_time, None, reference_time_written)
+	reference_time_timer.start()
 
+def write_reference_time(arg):
+	create_reference_date_time_event()
+	if cancel_timer is True:
+		return False
+	return True
+
+def reference_time_written():
+	print("time written")
+
+def cancel_reference_time_timer():
+	logger.info('cancel_reference_time_timer')
+	global reference_time_timer
+	reference_time_timer.cancel()
+	cancel_timer = True
 
 def set_default_status():
 	logger.info('set_default_status')

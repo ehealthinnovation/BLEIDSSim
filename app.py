@@ -689,6 +689,7 @@ def cleanup():
 	logger.info('Unregistering application')
 	service_manager.UnregisterApplication(ids.app.get_path())
 	
+	cancel_reference_time_timer()
 	cancel_all_delivery()
 	mainloop.quit()
 
