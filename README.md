@@ -15,3 +15,7 @@ The IDS simulator works with the CCInsulinDelivery iOS collector application (ht
 * Raspberry pi 3
 * Python 3.5
 * Bluez 5.4
+
+## Author
+
+Kevin Tallevi, ktallevi@ehealthinnovation.org
