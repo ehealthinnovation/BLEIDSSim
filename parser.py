@@ -2266,7 +2266,7 @@ def parse_racp(value):
 def handle_report_number_of_stored_records():
 	print('handle_report_number_of_stored_records')
 	data = []
-	count = get_row_count(Event)
+	count = get_history_count()
 	logger.info('history count: ' + str(count))
 	
 	data.append(dbus.Byte(RecordAccessControlPointOperators.null))
