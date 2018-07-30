@@ -115,7 +115,6 @@ def crc_is_valid(value):
 	calculated_crc = "".join(reversed([calculated_crc[i:i+2] for i in range(0, len(calculated_crc), 2)]))
 	
 	if calculated_crc == packet_crc:
-		logger.info('crc passed')
 		return True
 	else:
 		logger.info('crc failed')
@@ -260,12 +259,10 @@ def handle_reset_status(value):
 	data = []
 	status_changed_reset()
 
-	logger.info("handle_reset_status - 2")
 	data.append(dbus.Byte(StatusReaderOpCodes.reset_status & 0xff))
 	data.append(dbus.Byte(StatusReaderOpCodes.reset_status >> 8))
 	data.append(dbus.Byte(ResponseCodes.success))
 	packet = build_response_packet(StatusReaderOpCodes.response_code, data)
-	logger.info("handle_reset_status - send response")
 	send_response(IDSServiceCharacteristics.status_reader_control_point, packet)
 
 
@@ -287,7 +284,6 @@ def handle_get_active_bolus_ids():
 		data.append(dbus.Byte(ResponseCodes.procedure_not_completed))
 		packet = build_response_packet(StatusReaderOpCodes.response_code, data)
 	else:
-		logger.info('building active bolus ids packet')
 		data.append(dbus.Byte(len(active_bolus_ids)))
 		for x in range(len(active_bolus_ids)):
 			logger.info(active_bolus_ids[x])
@@ -302,13 +298,9 @@ def handle_get_active_bolus_delivery(value):
 	data = []
 
 	bolus_id = bytes_to_int16(value[2:4][::-1])
-	logger.info(bolus_id)
 	bolus_value_selection = value[4]
-	logger.info(bolus_value_selection)
-
 	bolus = get_bolus(bolus_id)
-	logger.info(bolus)
-
+	
 	if (bolus is None) or (bolus.active == 0):
 		logger.info('bolus does not exist or is not active')
 		data.append(dbus.Byte(CommandControlOpCodes.get_active_basal_rate_delivery & 0xff))
@@ -1717,16 +1709,13 @@ def handle_get_activated_profile_templates():
 	data = []
 	
 	rows = get_rows(TemplateLookup, TemplateLookup.active, 1)
-	logger.info(rows)
 	data.append(dbus.Byte(len(rows)))
 	number_of_activated_templates = len(rows)
 
 	if number_of_activated_templates > 0:
 		logger.info('appending activated templates')
 		for i in range(0, number_of_activated_templates):
-			logger.info(i)
 			template = rows[i]
-			logger.info(template)
 			data.append(dbus.Byte(template.template_number))
 	else:
 		logger.info('no activated templates')
@@ -1929,8 +1918,6 @@ def handle_write_isf_profile_template(value):
 					   third_duration,
 					   third_isf)
 
-	logger.info(result)
-
 	if result == True:
 		first_duration_data = value[5:7]
 		first_isf_data = value[7:9]
@@ -2067,8 +2054,6 @@ def handle_write_i2cho_ratio_profile_template(value):
 						 third_duration, 
 						 third_ratio)
 
-	logger.info(result)
-
 	if result == True:
 		first_duration_data = value[5:7]
 		first_ratio_data = value[7:9]
@@ -2184,8 +2169,6 @@ def handle_write_target_glucose_range_profile_template(value):
 								  second_lower_target_glucose_limit, 
 								  second_upper_target_glucose_limit)
 	
-	logger.info(result)
-
 	if result == True:
 		first_duration_data = value[5:7]
 		first_lower_target_glucose_limit_data = value[7:9]
