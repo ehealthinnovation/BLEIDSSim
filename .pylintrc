@@ -1,0 +1,11 @@
+[MASTER]
+disable=missing-docstring
+
+[MESSAGES CONTROL]
+confidence=HIGH
+
+[FORMAT]
+max-line-length=120
+indent-string=\t
+indent-after-paren=1
+

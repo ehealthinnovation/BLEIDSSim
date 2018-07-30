@@ -1,0 +1,17 @@
+[FEATURES]
+ids_features_e2e_protection_supported = 1
+ids_features_basal_rate_supported = 1
+ids_features_tbr_absolute_supported = 1
+ids_features_tbr_relative_supported = 1
+ids_features_tbr_template_supported = 1
+ids_features_fast_bolus_supported = 1
+ids_features_extended_bolus_supported = 1
+ids_features_multiwave_bolus_supported = 1
+ids_features_bolus_delay_supported = 1
+ids_features_bolus_template_supported = 1
+ids_features_bolus_activation_type_supported = 1
+ids_features_multiple_bond_supported = 1
+ids_features_isf_profile_template_supported = 1
+ids_features_i2cho_ratio_profile_template_supported = 1
+ids_features_target_glucose_range_profile_template_supported = 1
+ids_features_insulin_onboard_supported = 1
