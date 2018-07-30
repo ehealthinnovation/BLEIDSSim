@@ -2257,13 +2257,13 @@ def parse_racp(value):
 	print('op code: ' + repr(opcode))
 
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_number_of_stored_records):
-		handle_report_number_of_stored_records(value)
+		handle_report_number_of_stored_records()
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.report_stored_records):
 		handle_report_stored_records(value)
 	if str(int(opcode)) == str(RecordAccessControlPointOpCodes.delete_stored_records):
 		handle_delete_stored_records(value)
 
-def handle_report_number_of_stored_records(value):
+def handle_report_number_of_stored_records():
 	print('handle_report_number_of_stored_records')
 	data = []
 	count = get_row_count(Event)
