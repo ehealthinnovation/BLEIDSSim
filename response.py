@@ -42,7 +42,7 @@ def send_response(target, data):
 	logger.info('send_response')
 	logger.info(ids.app)
 	for service in ids.app.services:
-			if service.uuid == '1829':
+			if service.uuid == IDSServiceCharacteristics.service:
 				for characteristic in service.characteristics:
 					if characteristic.uuid == target:
 						logger.info('found characteristic')

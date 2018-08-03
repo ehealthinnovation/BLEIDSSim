@@ -57,8 +57,8 @@ class Application(dbus.service.Object):
 class DeviceAdvertisement(Advertisement):
 	def __init__(self, bus, index):
 		Advertisement.__init__(self, bus, index, 'peripheral')
-		self.add_service_uuid('1829')
-		self.add_service_uuid('180F')
+		self.add_service_uuid(IDSServiceCharacteristics.service)
+		self.add_service_uuid('180F') #battery service
 		self.include_tx_power = True
 
 class CharacteristicUserDescriptionDescriptor(Descriptor):
@@ -85,7 +85,7 @@ class CharacteristicUserDescriptionDescriptor(Descriptor):
 		self.value = value
 
 class BondManagementService(Service):
-	BOND_MGMT_UUID = '181E'
+	BOND_MGMT_UUID = '181e'
 	def __init__(self, bus, index):
 		Service.__init__(self, bus, index, self.BOND_MGMT_UUID, True)
 		self.add_characteristic(BondManagementControlPointChrc(bus, 0, self))
@@ -220,8 +220,12 @@ class DeviceInformationService(Service):
 		self.add_characteristic(ManufacturerNameChrc(bus, 0, self))
 		self.add_characteristic(ModelNumberChrc(bus, 1, self))
 		self.add_characteristic(SerialNumberChrc(bus, 2, self))
-		self.add_characteristic(SystemIDChrc(bus, 3, self))
-		self.add_characteristic(FirmwareRevisionChrc(bus, 4, self))
+		self.add_characteristic(SoftwareVersionChrc(bus, 3, self))
+		self.add_characteristic(HardwareVersionChrc(bus, 4, self))
+		self.add_characteristic(SystemIDChrc(bus, 5, self))
+		self.add_characteristic(FirmwareRevisionChrc(bus, 6, self))
+		self.add_characteristic(IEEE11073_20601RegulatoryCertificationDataListChrc(bus, 7, self))
+		self.add_characteristic(PNPIDChrc(bus, 8, self))
 
 class ManufacturerNameChrc(Characteristic):
 	DI_MANU_NAME_UUID = '2a29'
@@ -292,6 +296,63 @@ class FirmwareRevisionChrc(Characteristic):
 
 	def ReadValue(self, options):
 		return [0x31, 0x2E, 0x30]
+
+class SoftwareVersionChrc(Characteristic):
+	DI_SOFTWARE_VERSION_UUID = '2a28'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.DI_SOFTWARE_VERSION_UUID,
+			['read'],
+			service)
+		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0x31, 0x2E, 0x30]
+
+class HardwareVersionChrc(Characteristic):
+	DI_HARDWARE_VERSION_UUID = '2a27'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.DI_HARDWARE_VERSION_UUID,
+			['read'],
+			service)
+		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0x31, 0x2E, 0x30]
+
+class IEEE11073_20601RegulatoryCertificationDataListChrc(Characteristic):
+	DI_IEE11073_UUID = '2a2a'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.DI_IEE11073_UUID,
+			['read'],
+			service)
+		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0xFE, 0x00, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6D, 0x65, 0x6E, 0x74, 0x61, 0x6C]
+
+
+class PNPIDChrc(Characteristic):
+	DI_PNPID_UUID = '2a50'
+
+	def __init__(self, bus, index, service):
+		Characteristic.__init__(
+			self, bus, index,
+			self.DI_PNPID_UUID,
+			['read'],
+			service)
+		self.notifying = False
+
+	def ReadValue(self, options):
+		return [0x01, 0x0D, 0x00, 0x00, 0x00, 0x10, 0x01]
 
 class BatteryService(Service):
 	BATTERY_UUID = '180f'
@@ -568,7 +629,7 @@ class IDDCommandDataChrc(Characteristic):
 			return
 		
 		for service in ids.app.services:
-			if service.uuid == '1829':
+			if service.uuid == IDSServiceCharacteristics.service:
 				for characteristic in service.characteristics:
 					if characteristic.uuid == '2b00':
 						self.PropertiesChanged(
