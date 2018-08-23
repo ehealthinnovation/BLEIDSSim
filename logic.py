@@ -104,13 +104,17 @@ def set_bolus(bolus_type ,fast_amount, extended_amount, duration, delay_time, te
 
 def cancel_bolus(bolus_id):
 	logger.info('cancel_bolus')
+	logger.info(bolus_id)
+	active_bolus_ids = get_active_bolus_ids()
+	print('currently active bolus ids: ', active_bolus_ids)
 	for bolus in active_bolus_ids:
-		if bolus.number == bolus_id:
-			active_bolus_ids.remove(bolus)
-			print(repr(active_bolus_ids))
+		if bolus.bolus_id == bolus_id:
+			deactivate_bolus(bolus_id)
+			print('FOUND BOLUS TO CANCEL')
+			print(repr(bolus))
 			return True
-		else:
-			return False
+	print('no active bolus ids match provided bolus id')
+	return False
 
 def start_priming(priming_amount):
 	logger.info('start priming')

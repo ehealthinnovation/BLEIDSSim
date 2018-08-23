@@ -62,6 +62,7 @@ def parser_init():
 	db_init()
 	history_init()
 	annunciation_init()
+	write_annunciation(AnnunciationTypeValues.battery_full, AnnunciationStatusValues.pending)
 	set_default_status()
 	status_changed_init()
 	template_init()
@@ -71,6 +72,7 @@ def parser_init():
 	global reference_time_timer
 	reference_time_timer = perpetualTimer(reference_time_interval, write_reference_time, None, reference_time_written)
 	reference_time_timer.start()
+
 
 def write_reference_time(arg):
 	create_reference_date_time_event()
@@ -1284,9 +1286,11 @@ If the Operand that was sent with a Cancel Bolus Op Code specifies an invalid Bo
 '''
 def handle_cancel_bolus(value):
 	print('handle_cancel_bolus')
+	print(value)
 	data = []
 
 	bolus_id = bytes_to_int16(value[2:4][::-1])
+	print('bolus id: ', bolus_id)
 	result = cancel_bolus(bolus_id)
 
 	if result is False:
